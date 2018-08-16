@@ -5,3 +5,6 @@ all:
 clean:
 	rm -f etapa1
 	rm -f lex.yy.c
+
+test:
+	bash test.sh

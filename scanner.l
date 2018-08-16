@@ -8,7 +8,7 @@ INT     [0-9]+
 FLOAT   {INT}\.{INT}
 SCI_NOT [1-9]\.{INT}[Ee][+-]?{INT}
 STR     \"([^"]|\\.)*\"
-IDENT   [a-zA-Z_]+[a-zA-Z0-9_]*
+IDENT   [a-zA-Z_][a-zA-Z0-9_]*
 
 %%
 [ \t]
