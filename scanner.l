@@ -8,6 +8,7 @@ INT     [0-9]+
 FLOAT   {INT}\.{INT}
 SCI_NOT [1-9]\.{INT}[Ee][+-]?{INT}
 STR     \"([^"]|\\.)*\"
+IDENT   [a-zA-Z_]+[a-zA-Z0-9_]*
 
 %%
 [ \t]
@@ -57,6 +58,8 @@ STR     \"([^"]|\\.)*\"
 "true"            return TK_LIT_TRUE;
 '.'               return TK_LIT_CHAR;
 {STR}             return TK_LIT_STRING;
+
+{IDENT}           return TK_IDENTIFICADOR;
 .                 return TOKEN_ERRO;
 %%
 
