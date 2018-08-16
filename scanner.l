@@ -12,7 +12,7 @@ IDENT   [a-zA-Z_]+[a-zA-Z0-9_]*
 
 %%
 [ \t]
-"\n"              ++cur_line;
+"\n"|"\r\n"       ++cur_line;
 "int"             return TK_PR_INT;
 "float"           return TK_PR_FLOAT;
 "bool"            return TK_PR_BOOL;
