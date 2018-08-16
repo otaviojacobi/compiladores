@@ -7,9 +7,9 @@ COPY . /usr/compiladores
 # ENV http_proxy http://proxy:8080
 # ENV https_proxy http://proxy:8080
 
-RUN apt-get update
-RUN apt-get install make
-RUN apt-get install gcc
-RUN apt-get install flex
-RUN apt-get install bison
-RUN apt-get install valgrind
+RUN apt-get -y update
+RUN apt-get -y install make
+RUN apt-get -y install gcc
+RUN apt-get -y install flex
+RUN apt-get -y install bison
+RUN apt-get -y install valgrind
