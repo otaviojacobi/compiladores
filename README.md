@@ -26,7 +26,7 @@
 - Run the following line to enter container: 
   
     ```
-    docker exec -it offroad.site bash
+    docker exec -it compiladores bash
     ```
 
 - Now you're good to go, your "compiladores" file is shared between the container and the host machine
