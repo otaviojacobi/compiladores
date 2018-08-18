@@ -2,6 +2,7 @@
 #include "tokens.h"
 int get_line_number(void);
 int cur_line = 1;
+void print_tkn(char* str);
 %}
 
 INT     [0-9]+
@@ -9,6 +10,8 @@ FLOAT   {INT}\.{INT}
 SCI_NOT [1-9]\.{INT}[Ee][+-]?{INT}
 STR     \"([^"]|\\.)*\"
 IDENT   [a-zA-Z_][a-zA-Z0-9_]*
+SINGLE_LINE_COMMENT \/\/.*
+MULTI_LINE_COMMENT \/\*[^(\*\/)]*\*\/
 
 %%
 [ \t]
@@ -59,8 +62,13 @@ IDENT   [a-zA-Z_][a-zA-Z0-9_]*
 '.'               return TK_LIT_CHAR;
 {STR}             return TK_LIT_STRING;
 
+{SINGLE_LINE_COMMENT} {}
+{MULTI_LINE_COMMENT} {}
+
+
 {IDENT}           return TK_IDENTIFICADOR;
 .                 return TOKEN_ERRO;
+
 %%
 
 int get_line_number(void) {
