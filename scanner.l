@@ -10,12 +10,16 @@ FLOAT   {INT}\.{INT}
 SCI_NOT [1-9]\.{INT}[Ee][+-]?{INT}
 STR     \"([^"]|\\.)*\"
 IDENT   [a-zA-Z_][a-zA-Z0-9_]*
+NEW_LINE ("\r\n"|"\n"|"\r")
 SINGLE_LINE_COMMENT \/\/.*
-MULTI_LINE_COMMENT \/\*[^(\*\/)]*\*\/
+MULTI_LINE_COMMENT_START \/\*
+MULTI_LINE_COMMENT_END \*\/
+%x BLOCK_COMMENT
+%s CODE
 
 %%
 [ \t]
-"\n"|"\r\n"       ++cur_line;
+{NEW_LINE}		  ++cur_line;
 "int"             return TK_PR_INT;
 "float"           return TK_PR_FLOAT;
 "bool"            return TK_PR_BOOL;
@@ -62,9 +66,11 @@ MULTI_LINE_COMMENT \/\*[^(\*\/)]*\*\/
 '.'               return TK_LIT_CHAR;
 {STR}             return TK_LIT_STRING;
 
-{SINGLE_LINE_COMMENT} {}
-{MULTI_LINE_COMMENT} {}
-
+{SINGLE_LINE_COMMENT} 				{}
+{MULTI_LINE_COMMENT_START} 			BEGIN(BLOCK_COMMENT);
+<BLOCK_COMMENT>[^(\*\/)(\r\n)\n\r]* {}
+<BLOCK_COMMENT>{NEW_LINE} 			++cur_line;
+<BLOCK_COMMENT>\*\/ 				BEGIN(CODE);
 
 {IDENT}           return TK_IDENTIFICADOR;
 .                 return TOKEN_ERRO;
