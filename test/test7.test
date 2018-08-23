@@ -1,0 +1,9 @@
+
+int main() {
+    char a = '\n'; // segundo https://github.com/schnorr/comp/issues/37 podemos definir como implementar isso
+                   // fiz como em C :)
+    string b = "\"o\ti\"";
+    b += a;
+
+    return 0;
+}

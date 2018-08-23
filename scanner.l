@@ -64,7 +64,7 @@ MULTI_LINE_COMMENT_END    \*\/
 {FLOAT}|{SCI_NOT} return TK_LIT_FLOAT;
 "false"           return TK_LIT_FALSE;
 "true"            return TK_LIT_TRUE;
-'.'               return TK_LIT_CHAR;
+'.'|'\\.'         return TK_LIT_CHAR;
 {STR}             return TK_LIT_STRING;
 
 {SINGLE_LINE_COMMENT}               {}
