@@ -7,8 +7,8 @@ void print_tkn(char* str);
 
 INT                       [0-9]+
 FLOAT                     {INT}\.{INT}
-SCI_NOT                   [1-9]\.{INT}[Ee][+-]?{INT}
-STR                       \"([^"]|\\.)*\"
+SCI_NOT                   {INT}\.{INT}[Ee][+-]?{INT}
+STR                       \"([^"^\n]|\\.)*\"
 IDENT                     [a-zA-Z_][a-zA-Z0-9_]*
 NEW_LINE                  ("\r\n"|"\n"|"\r")
 SINGLE_LINE_COMMENT       \/\/.*
