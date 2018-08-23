@@ -1,0 +1,3 @@
+/* Should NOT accept multiline string without line breaks*/
+string a = "oie
+teste";
