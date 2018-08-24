@@ -11,6 +11,6 @@ int main () {
     float a[6] = -6.55e5;
     float a[7] = +5.66e5;
     float a[8] = 12.0e2;
-    **/// a test
+    * a test where the comment is not closed
     return a;
 }

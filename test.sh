@@ -5,7 +5,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m' 
 NO_COLOR='\033[0m'
 echo "Running tests..."
-for i in test/*.test; do
+for i in `ls test/*.test | sort -V`; do
     cur_test=(${i//./ })
     expected_test="${cur_test[0]}"_expected.txt
     result="$(./etapa1 < $i | diff $expected_test - -w -b)"

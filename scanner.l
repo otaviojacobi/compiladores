@@ -2,6 +2,7 @@
 #include "tokens.h"
 int get_line_number(void);
 int cur_line = 1;
+int comment_start_line;
 void print_tkn(char* str);
 %}
 
@@ -10,13 +11,15 @@ FLOAT                     {INT}\.{INT}
 SCI_NOT                   {INT}\.{INT}[Ee][+-]?{INT}
 STR                       \"([^"^\n]|\\.)*\"
 IDENT                     [a-zA-Z_][a-zA-Z0-9_]*
-NEW_LINE                  ("\r\n"|"\n"|"\r")
+NEW_LINE                  ("\r\n"|"\n")
 SINGLE_LINE_COMMENT       \/\/.*
 MULTI_LINE_COMMENT_START  \/\*
 MULTI_LINE_COMMENT_END    \*\/
 
 %x BLOCK_COMMENT
 %s CODE
+
+%option noyywrap
 
 %%
 " "|"\t"
@@ -67,11 +70,15 @@ MULTI_LINE_COMMENT_END    \*\/
 '.'|'\\.'         return TK_LIT_CHAR;
 {STR}             return TK_LIT_STRING;
 
-{SINGLE_LINE_COMMENT}               {}
-{MULTI_LINE_COMMENT_START}          BEGIN(BLOCK_COMMENT);
-<BLOCK_COMMENT>[^(\*\/)(\r\n)\n\r]* {}
-<BLOCK_COMMENT>{NEW_LINE}           ++cur_line;
-<BLOCK_COMMENT>\*\/                 BEGIN(CODE);
+{SINGLE_LINE_COMMENT}       {}
+{MULTI_LINE_COMMENT_START}  { BEGIN(BLOCK_COMMENT); comment_start_line = cur_line; }
+<BLOCK_COMMENT>{
+	<<EOF>>			{ BEGIN(CODE); cur_line = comment_start_line; return TOKEN_ERRO; }
+	{NEW_LINE}   ++cur_line;
+	\* 		{ /* flex always matches the string with more text, therefore this will not interfere with the \*\/ match */ }
+	\*\/         BEGIN(CODE);
+	[^\*\n]* 	{/* stops matching when finds either a \n or a * character */}
+}
 
 {IDENT}           return TK_IDENTIFICADOR;
 .                 return TOKEN_ERRO;
