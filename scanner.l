@@ -6,9 +6,10 @@ int comment_start_line;
 void print_tkn(char* str);
 %}
 
-INT                       [0-9]+
-FLOAT                     {INT}\.{INT}
-SCI_NOT                   {INT}\.{INT}[Ee][+-]?{INT}
+DIGIT                     [0-9]+
+INT                       [+-]?{DIGIT}
+FLOAT                     {INT}\.{DIGIT}
+SCI_NOT                   {INT}\.{DIGIT}[Ee]{INT}
 STR                       \"([^"^\n]|\\.)*\"
 IDENT                     [a-zA-Z_][a-zA-Z0-9_]*
 NEW_LINE                  ("\r\n"|"\n")
