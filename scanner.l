@@ -1,5 +1,5 @@
 %{
-#include "tokens.h"
+#include "parser.tab.h"
 int get_line_number(void);
 int cur_line = 1;
 int comment_start_line;
@@ -89,3 +89,7 @@ MULTI_LINE_COMMENT_END    \*\/
 int get_line_number(void) {
   return cur_line;
 }
+
+void yyerror (char const *s) {
+   fprintf (stderr, "%s\n", s);
+ }
