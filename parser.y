@@ -54,6 +54,7 @@ start: new_type_decl | galobal_var_decl | func;
 
 std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
+tk_id_or_lit: TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING | TK_IDENTIFICADOR;
 
 new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '{' field_list '}' ';';
 field_list: field_list ':' field | field;
@@ -71,5 +72,11 @@ param: std_type TK_IDENTIFICADOR | TK_PR_CONST std_type TK_IDENTIFICADOR;
 
 func_body: command_block;
 
-command_block: '{' '}'
+command_block: '{' command_seq '}' | '{' '}';
+command_seq: command_seq simple_command ';' | simple_command ';';
+
+simple_command: local_var_decl;
+
+local_var_decl: TK_IDENTIFICADOR lv_type | TK_IDENTIFICADOR lv_type TK_OC_LE tk_id_or_lit;
+lv_type: TK_PR_STATIC TK_PR_CONST std_type | TK_PR_STATIC std_type | std_type;
 %%
