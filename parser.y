@@ -49,6 +49,27 @@ void yyerror (char const *s);
 
 %%
 
-programa:
+programa: programa start | start;
+start: new_type_decl | galobal_var_decl | func;
 
+std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
+protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
+
+new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '{' field_list '}' ';';
+field_list: field_list ':' field | field;
+field: protection std_type TK_IDENTIFICADOR | std_type TK_IDENTIFICADOR;
+
+galobal_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';';
+gv_type: TK_PR_STATIC std_type | std_type;
+
+func: func_head func_body;
+
+func_head: std_type TK_IDENTIFICADOR param_list | TK_PR_STATIC std_type TK_IDENTIFICADOR param_list;
+param_list: '(' parameters ')' | '(' ')';
+parameters: parameters ',' param | param;
+param: std_type TK_IDENTIFICADOR | TK_PR_CONST std_type TK_IDENTIFICADOR;
+
+func_body: command_block;
+
+command_block: '{' '}'
 %%

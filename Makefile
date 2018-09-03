@@ -1,6 +1,6 @@
 .PHONY: clean test
 all:
-	bison -d parser.y
+	bison -d parser.y --report-file=parser.output --verbose
 	flex scanner.l
 	gcc main.c parser.tab.c lex.yy.c -o etapa2 -lfl
 
