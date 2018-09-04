@@ -47,6 +47,9 @@ void yyerror (char const *s);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 
+%left '+' '-'
+%left '*' '/'
+
 %%
 
 programa: programa start | start;
@@ -54,7 +57,9 @@ start: new_type_decl | galobal_var_decl | func;
 
 std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
-tk_id_or_lit: TK_LIT_INT | TK_LIT_FLOAT | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING | TK_IDENTIFICADOR;
+tk_numeric_lit: TK_LIT_INT | TK_LIT_FLOAT;
+tk_lit: tk_numeric_lit | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING;
+tk_id_or_lit: tk_lit | TK_IDENTIFICADOR;
 
 new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '{' field_list '}' ';';
 field_list: field_list ':' field | field;
@@ -75,8 +80,17 @@ func_body: command_block;
 command_block: '{' command_seq '}' | '{' '}';
 command_seq: command_seq simple_command ';' | simple_command ';';
 
-simple_command: local_var_decl;
+simple_command: local_var_decl | attribution;
 
 local_var_decl: TK_IDENTIFICADOR lv_type | TK_IDENTIFICADOR lv_type TK_OC_LE tk_id_or_lit;
 lv_type: TK_PR_STATIC TK_PR_CONST std_type | TK_PR_STATIC std_type | std_type;
+
+attribution: TK_IDENTIFICADOR '=' expression;
+
+expression: arithmetic_expr;
+
+arithmetic_expr: '(' arithmetic_expr ')' | arithmetic_operand | expression arithmetic_operator expression;
+arithmetic_operand: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' expression ']' | tk_numeric_lit;
+arithmetic_operator: '+'|'-'|'*'|'/'|'%';
+
 %%
