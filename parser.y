@@ -47,8 +47,20 @@ void yyerror (char const *s);
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
 
+//The first precedence/associativity declaration in the file declares the operators whose precedence is lowest
+//the next such declaration declares the operators whose precedence is a little higher, and so on.
+// Created this following standard C precendence
+%left TK_OC_OR
+%left TK_OC_AND
+%left TK_OC_EQ TK_OC_NE 
+%left '<' TK_OC_LE '>' TK_OC_GE
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
+
+//TODO: Should this be max prio ?
+%left TK_OC_FORWARD_PIPE TK_OC_BASH_PIPE
+
+//TODO: Is case a command ? wtf
 
 %%
 
@@ -60,6 +72,12 @@ protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
 tk_numeric_lit: TK_LIT_INT | TK_LIT_FLOAT;
 tk_lit: tk_numeric_lit | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING;
 tk_id_or_lit: tk_lit | TK_IDENTIFICADOR;
+
+identificador_accessor:  TK_IDENTIFICADOR
+                       | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR 
+                       | TK_IDENTIFICADOR '[' expression ']'
+                       | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
+;
 
 new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '{' field_list '}' ';';
 field_list: field_list ':' field | field;
@@ -80,17 +98,52 @@ func_body: command_block;
 command_block: '{' command_seq '}' | '{' '}';
 command_seq: command_seq simple_command ';' | simple_command ';';
 
-simple_command: local_var_decl | attribution;
+simple_command:  local_var_decl 
+               | attribution 
+               | input 
+               | output 
+               | func_call 
+               | shift_cmd 
+               | return
+               | TK_PR_BREAK
+               | TK_PR_CONTINUE
+;
 
 local_var_decl: TK_IDENTIFICADOR lv_type | TK_IDENTIFICADOR lv_type TK_OC_LE tk_id_or_lit;
 lv_type: TK_PR_STATIC TK_PR_CONST std_type | TK_PR_STATIC std_type | std_type;
 
-attribution: TK_IDENTIFICADOR '=' expression;
+attribution: identificador_accessor '=' expression;
 
-expression: arithmetic_expr;
+input: TK_PR_INPUT expression;
+output: TK_PR_OUTPUT expression_list;
 
-arithmetic_expr: '(' arithmetic_expr ')' | arithmetic_operand | expression arithmetic_operator expression;
-arithmetic_operand: TK_IDENTIFICADOR | TK_IDENTIFICADOR '[' expression ']' | tk_numeric_lit;
-arithmetic_operator: '+'|'-'|'*'|'/'|'%';
+func_call: TK_IDENTIFICADOR '(' args ')';
+args: args ',' expression | args ',' '.' | '.' | expression;
+
+shift_cmd: identificador_accessor TK_OC_SL expression | identificador_accessor TK_OC_SR expression;
+
+return: TK_PR_RETURN expression;
+
+expression_list: expression_list ',' expression | expression;
+expression:  '(' expression ')'
+           | identificador_accessor
+           | expression TK_OC_FORWARD_PIPE expression
+           | expression TK_OC_BASH_PIPE expression
+           | expression '*' expression
+           | expression '/' expression
+           | expression '%' expression
+           | expression '+' expression
+           | expression '-' expression
+           | expression '<' expression
+           | expression TK_OC_LE expression
+           | expression '>' expression
+           | expression TK_OC_GE expression
+           | expression TK_OC_EQ expression
+           | expression TK_OC_NE expression
+           | expression TK_OC_AND expression
+           | expression TK_OC_OR expression
+           | func_call
+           | tk_lit
+;
 
 %%
