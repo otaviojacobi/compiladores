@@ -1,0 +1,3 @@
+Error on line: 1
+syntax error
+RETURN CODE: 1

@@ -1,0 +1,191 @@
+// testes de declarações globais
+aux_murilo_n static int;
+aux_murilo_n int;
+aux_murilo_n[5] int;
+aux_murilo_n float;
+aux_murilo_n char;
+aux_murilo_n bool;
+aux_murilo_n string;
+aux_murilo_n minhaClasse;
+aux_murilo_n[5] minhaClasse;
+
+/* funções */
+int func1() {
+
+}
+
+static bool func1()
+{
+    int variavel;
+    static float variavel2;
+    static const string variavel3;
+    variavel = 1 + 2;
+    variavel << 5 * (-8);
+    variavel >> 0;
+    const int variavel4 <= variavel;
+    minhaClasse variavel5;
+    static const minhaClasse variavel6;
+    variavel5$morto = true;
+    variavel5$morto << 5;
+    variavel5$morto >> 12;
+    aux_murilo_n[1] = 0;
+    aux_murilo_n[0]$idade = 20.6;
+}
+
+int func1(char param1)
+{
+    input 1;
+    input 1 + 2;
+    output 1;
+    output 1 ^ 2;
+    output true, !false, 3, true & false, 5;
+    func1();
+    func1(x);
+    func1(x, y, false | false);
+}
+
+string func1( const float param1 )
+{
+    if (42) then {
+
+    };
+
+    if (42 / ---5) then {
+        int x <= 5;
+        float y <= 5.32e4;
+    };
+
+    if (0 % true) then {
+
+    } else {
+
+    };
+
+    if (0 > 0) then {
+        y = x();
+    } else {
+        y = "false";
+    };
+
+    if (0 <= 34) then {
+        if (0 > 1) then {
+            y = x(true);
+        } else {
+            y = "false";
+        };
+    } else {
+        y = "false";
+
+        if (teste(0)) then {
+            y = true == 3;
+        } else {
+            y = "false";
+        };
+    };
+
+    while (1 >= 2) do {
+
+    };
+
+    while (1 != 2) do {
+        int y;
+    };
+
+    while (1 && 2) do {
+        if (1 || 2) then {
+            x << (5*1);
+            break;
+        };
+    };
+
+    while (1 + 2) do {
+        while (1 + 2) do {
+            if (1 + 2) then {
+                x << 5;
+                continue;
+            };
+        };
+    };
+
+    do {
+
+    } while ( false );
+
+    do {
+        int y;
+    } while ( false );
+
+    do {
+        int y;
+        do {
+            int y;
+        } while ( false );
+    } while ( false );
+
+    return "OKAY";
+}
+
+int func1(int param1, const char param2) {
+    {};
+
+    { output x, y; };
+
+    foreach(teste_1 : 1 + 2) {
+        int a;
+    };
+
+    foreach(teste_1 : 1 - 2, true) {
+        break;
+    };
+
+    foreach(teste_1 : (1), true, 1.25) {
+    };
+
+    for(int i <= 0 : true : i = j) {
+        break;
+    };
+
+    for(int i <= 0, i = 2 : -0 : i = 1 + 52) {
+        continue;
+    };
+
+    for(int i <= 0, i = 2 : !true : i = false, j = -1 + +2) {
+    };
+
+    for({ } : 1 + 2 : i = false, j = -1 + 2) {
+        x = x ? 1 : 2;
+    };
+
+    for({
+          for({ output 1, 2, 3; } : 1 + 2 : i = false, j = -1 + 2) {
+          };
+        } : 1 + 2 : i = false, j = -1 + 2) {
+    };
+
+    {
+      f() %>% g(.);
+
+      f(a) %|% g(c, .);
+
+      f(a, b) %|% g(., c);
+
+      f(a, b) %>% g(c, ., d) %|% h(i, ., k);
+
+      teste = f() %>% g(.) %|% h(.);
+    };
+}
+
+/*
+    *** declarações de tipos de usuário ***
+*/
+
+class Teste [ char marcador ];
+
+class
+minhaClasse [
+    int id
+    : string nome
+    : public int idade
+    : private float saldo
+    : protected bool morto
+];

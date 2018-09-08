@@ -1,0 +1,4 @@
+int func1(char param1)
+{
+   /* teste de comentário não fechado
+}

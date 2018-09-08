@@ -1,0 +1,2 @@
+Line 6: syntax error near "}"
+RETURN CODE: 1

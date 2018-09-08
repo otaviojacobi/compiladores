@@ -1,0 +1,6 @@
+class
+minhaClasse [
+    : string nome
+    : int idade
+    : bool morto
+];

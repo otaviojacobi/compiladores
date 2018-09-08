@@ -1,0 +1,2 @@
+Line 1: syntax error near "static"
+RETURN CODE: 1

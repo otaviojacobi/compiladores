@@ -1,0 +1,8 @@
+int main()
+{
+  if (true) then {
+    if (true) then {
+      int x;
+    }
+  };
+}

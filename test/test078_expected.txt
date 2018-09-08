@@ -1,0 +1,2 @@
+Line 7: syntax error near ":"
+RETURN CODE: 1

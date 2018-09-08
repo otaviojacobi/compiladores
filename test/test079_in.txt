@@ -1,0 +1,4 @@
+int func1()
+{
+  func2(a, , c);
+}

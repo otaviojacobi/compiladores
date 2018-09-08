@@ -1,0 +1,7 @@
+int main()
+{
+  switch (x) {
+    case "teste":
+      y = 2;
+  };
+}

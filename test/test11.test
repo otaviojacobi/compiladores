@@ -1,6 +1,0 @@
-int main() {
-    printf("teste\"dsada\ndsadsa"); // this is a comment and should be ignored !
-    char* hello = " a string \n \" "; /*//** this is also a comment and should be ignored*/
-    int _number = /*can i do this ? "yes you should"*/ 5; 
-    return 0; // My return value should be the same without comments (as long keeping same number of lines)
-}

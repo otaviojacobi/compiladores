@@ -50,22 +50,29 @@ void yyerror (char const *s);
 //The first precedence/associativity declaration in the file declares the operators whose precedence is lowest
 //the next such declaration declares the operators whose precedence is a little higher, and so on.
 // Created this following standard C precendence
+
+%left '!' ':'
 %left TK_OC_OR
 %left TK_OC_AND
+%left '|'
+%left '^'
+%right '&'
 %left TK_OC_EQ TK_OC_NE 
 %left '<' TK_OC_LE '>' TK_OC_GE
 %left '+' '-'
-%left '*' '/' '%'
+%left '/' '%'
+%right '*'
 
 //TODO: Should this be max prio ?
-%left TK_OC_FORWARD_PIPE TK_OC_BASH_PIPE
 
+
+%right '#' '?'
 //TODO: Is case a command ? wtf
 
 %%
 
 programa: programa start | start;
-start: new_type_decl | galobal_var_decl | func;
+start: new_type_decl | global_var_decl | func;
 
 std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
@@ -79,62 +86,114 @@ identificador_accessor:  TK_IDENTIFICADOR
                        | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
 ;
 
-new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '{' field_list '}' ';';
+new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';';
 field_list: field_list ':' field | field;
 field: protection std_type TK_IDENTIFICADOR | std_type TK_IDENTIFICADOR;
 
-galobal_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' ';';
-gv_type: TK_PR_STATIC std_type | std_type;
+global_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';';
+gv_type: TK_PR_STATIC std_type | std_type | TK_PR_STATIC TK_IDENTIFICADOR | TK_IDENTIFICADOR;
 
 func: func_head func_body;
 
-func_head: std_type TK_IDENTIFICADOR param_list | TK_PR_STATIC std_type TK_IDENTIFICADOR param_list;
+func_head:  std_type TK_IDENTIFICADOR param_list 
+          | TK_PR_STATIC std_type TK_IDENTIFICADOR param_list
+          | TK_IDENTIFICADOR std_type TK_IDENTIFICADOR param_list
+          | TK_PR_STATIC TK_IDENTIFICADOR std_type TK_IDENTIFICADOR param_list
+;
+
 param_list: '(' parameters ')' | '(' ')';
 parameters: parameters ',' param | param;
-param: std_type TK_IDENTIFICADOR | TK_PR_CONST std_type TK_IDENTIFICADOR;
+param:  std_type TK_IDENTIFICADOR 
+      | TK_PR_CONST std_type TK_IDENTIFICADOR
+      | TK_IDENTIFICADOR TK_IDENTIFICADOR
+      | TK_PR_CONST TK_IDENTIFICADOR TK_IDENTIFICADOR
+;
 
 func_body: command_block;
 
 command_block: '{' command_seq '}' | '{' '}';
-command_seq: command_seq simple_command ';' | simple_command ';';
+command_seq: command_seq simple_command | simple_command;
+command_list: command_list ',' command_no_comma | command_no_comma;
 
-simple_command:  local_var_decl 
-               | attribution 
-               | input 
-               | output 
-               | func_call 
-               | shift_cmd 
-               | return
-               | TK_PR_BREAK
-               | TK_PR_CONTINUE
+simple_command: command_no_comma ';' | command_with_comma ';';
+
+command_no_comma: command_block
+                  | local_var_decl 
+                  | attribution 
+                  | input 
+                  | shift_cmd 
+                  | return
+                  | func_call
+                  | TK_PR_BREAK
+                  | TK_PR_CONTINUE
+                  | conditional_command
+                  | iteractive_command
+                  | pipe_command
 ;
 
-local_var_decl: TK_IDENTIFICADOR lv_type | TK_IDENTIFICADOR lv_type TK_OC_LE tk_id_or_lit;
-lv_type: TK_PR_STATIC TK_PR_CONST std_type | TK_PR_STATIC std_type | std_type;
+command_with_comma: output;
+
+local_var_decl: lv_type TK_IDENTIFICADOR | lv_type TK_IDENTIFICADOR TK_OC_LE tk_id_or_lit;
+lv_type:  TK_PR_STATIC TK_PR_CONST std_type 
+        | TK_PR_STATIC std_type 
+        | TK_PR_CONST std_type
+        | std_type
+        | TK_PR_STATIC TK_PR_CONST TK_IDENTIFICADOR 
+        | TK_PR_STATIC TK_IDENTIFICADOR 
+        | TK_PR_CONST TK_IDENTIFICADOR
+        | TK_IDENTIFICADOR
+;
 
 attribution: identificador_accessor '=' expression;
 
 input: TK_PR_INPUT expression;
 output: TK_PR_OUTPUT expression_list;
 
-func_call: TK_IDENTIFICADOR '(' args ')';
+func_call: TK_IDENTIFICADOR '(' args ')' | TK_IDENTIFICADOR '(' ')';
 args: args ',' expression | args ',' '.' | '.' | expression;
 
 shift_cmd: identificador_accessor TK_OC_SL expression | identificador_accessor TK_OC_SR expression;
 
 return: TK_PR_RETURN expression;
 
+conditional_command: TK_PR_IF '(' expression ')' TK_PR_THEN command_block
+                   | TK_PR_IF '(' expression ')' TK_PR_THEN command_block TK_PR_ELSE command_block
+;
+
+iteractive_command:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block
+                   | TK_PR_FOR '(' command_list ':' expression ':' command_list ')' command_block
+                   | TK_PR_WHILE '(' expression ')' TK_PR_DO command_block
+                   | TK_PR_DO  command_block TK_PR_WHILE '(' expression ')'
+;
+
+pipe_command:  pipe_rec TK_OC_FORWARD_PIPE func_call
+             | pipe_rec TK_OC_BASH_PIPE func_call
+;
+
+pipe_rec:  pipe_rec TK_OC_FORWARD_PIPE func_call
+         | pipe_rec TK_OC_BASH_PIPE func_call
+         | func_call
+;
+
 expression_list: expression_list ',' expression | expression;
 expression:  '(' expression ')'
            | identificador_accessor
-           | expression TK_OC_FORWARD_PIPE expression
-           | expression TK_OC_BASH_PIPE expression
+           | '+' expression
+           | '-' expression
+           | '!' expression
+           | '&' expression
+           | '*' expression
+           | '?' expression
+           | '#' expression
            | expression '*' expression
            | expression '/' expression
            | expression '%' expression
            | expression '+' expression
            | expression '-' expression
            | expression '<' expression
+           | expression '|' expression
+           | expression '&' expression
+           | expression '^' expression
            | expression TK_OC_LE expression
            | expression '>' expression
            | expression TK_OC_GE expression
@@ -142,6 +201,8 @@ expression:  '(' expression ')'
            | expression TK_OC_NE expression
            | expression TK_OC_AND expression
            | expression TK_OC_OR expression
+           | expression '?' expression ':' expression
+           | pipe_command
            | func_call
            | tk_lit
 ;

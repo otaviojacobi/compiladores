@@ -1,0 +1,2 @@
+Line 5: syntax error near "while"
+RETURN CODE: 1

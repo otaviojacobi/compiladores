@@ -1,0 +1,10 @@
+int main()
+{
+  switch (x) {
+    case 1:
+      y = 2;
+      break;
+
+    y = 1;
+  };
+}

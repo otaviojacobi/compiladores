@@ -1,0 +1,5 @@
+int main() {
+  for ( : true : int y) {
+    int x;
+  };
+}

@@ -1,0 +1,2 @@
+Line 1: syntax error near "class"
+RETURN CODE: 1

@@ -1,0 +1,5 @@
+int main() {
+  foreach( x: true, , false) {
+    int x;
+  };
+}

@@ -89,6 +89,6 @@ int get_line_number(void) {
   return cur_line;
 }
 
-void yyerror (char const *s) {
-   fprintf (stderr, "Error on line: %d\n%s\n",get_line_number(), s);
+void yyerror (char const *error) {
+   fprintf (stderr, "Line %d: %s near \"%s\"",get_line_number(), error, yytext);
 }
