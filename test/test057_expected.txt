@@ -1,2 +1,2 @@
-Line 5: syntax error near "while"
+Line 5: syntax error in
 RETURN CODE: 1

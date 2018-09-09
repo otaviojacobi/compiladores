@@ -1,5 +1,1 @@
-1,2c1
-< Error on line: 1
-< syntax error
----
-> Line 1: syntax error near "3.5"
+Files test/test005_out.txt and test/test005_expected.txt are identical

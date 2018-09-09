@@ -1,2 +1,1 @@
-Line 2: syntax error near ")"
-RETURN CODE: 1
+RETURN CODE: 0

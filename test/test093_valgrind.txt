@@ -1,0 +1,22 @@
+==11146== Memcheck, a memory error detector
+==11146== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==11146== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==11146== Command: ./etapa2
+==11146== 
+Line 5: syntax error in
+==11146== 
+==11146== HEAP SUMMARY:
+==11146==     in use at exit: 16,458 bytes in 3 blocks
+==11146==   total heap usage: 4 allocs, 1 frees, 24,650 bytes allocated
+==11146== 
+==11146== LEAK SUMMARY:
+==11146==    definitely lost: 0 bytes in 0 blocks
+==11146==    indirectly lost: 0 bytes in 0 blocks
+==11146==      possibly lost: 0 bytes in 0 blocks
+==11146==    still reachable: 16,458 bytes in 3 blocks
+==11146==         suppressed: 0 bytes in 0 blocks
+==11146== Reachable blocks (those to which a pointer was found) are not shown.
+==11146== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==11146== 
+==11146== For counts of detected and suppressed errors, rerun with: -v
+==11146== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

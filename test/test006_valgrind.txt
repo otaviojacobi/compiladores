@@ -1,30 +1,22 @@
-==2258== Memcheck, a memory error detector
-==2258== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==2258== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
-==2258== Command: ./etapa2
-==2258== 
-==2258== 
-==2258== Process terminating with default action of signal 2 (SIGINT)
-==2258==    at 0x4B37796: tcgetattr (tcgetattr.c:38)
-==2258==    by 0x4B33D4B: isatty (isatty.c:27)
-==2258==    by 0x10AFC2: yy_init_buffer (in /usr/compiladores/etapa2)
-==2258==    by 0x10AE93: yy_create_buffer (in /usr/compiladores/etapa2)
-==2258==    by 0x1099C3: yylex (in /usr/compiladores/etapa2)
-==2258==    by 0x109486: yyparse (in /usr/compiladores/etapa2)
-==2258==    by 0x109238: main (in /usr/compiladores/etapa2)
-==2258== 
-==2258== HEAP SUMMARY:
-==2258==     in use at exit: 16,458 bytes in 3 blocks
-==2258==   total heap usage: 3 allocs, 0 frees, 16,458 bytes allocated
-==2258== 
-==2258== LEAK SUMMARY:
-==2258==    definitely lost: 0 bytes in 0 blocks
-==2258==    indirectly lost: 0 bytes in 0 blocks
-==2258==      possibly lost: 0 bytes in 0 blocks
-==2258==    still reachable: 16,458 bytes in 3 blocks
-==2258==         suppressed: 0 bytes in 0 blocks
-==2258== Reachable blocks (those to which a pointer was found) are not shown.
-==2258== To see them, rerun with: --leak-check=full --show-leak-kinds=all
-==2258== 
-==2258== For counts of detected and suppressed errors, rerun with: -v
-==2258== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==10363== Memcheck, a memory error detector
+==10363== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==10363== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==10363== Command: ./etapa2
+==10363== 
+Line 1: syntax error in
+==10363== 
+==10363== HEAP SUMMARY:
+==10363==     in use at exit: 16,458 bytes in 3 blocks
+==10363==   total heap usage: 4 allocs, 1 frees, 24,650 bytes allocated
+==10363== 
+==10363== LEAK SUMMARY:
+==10363==    definitely lost: 0 bytes in 0 blocks
+==10363==    indirectly lost: 0 bytes in 0 blocks
+==10363==      possibly lost: 0 bytes in 0 blocks
+==10363==    still reachable: 16,458 bytes in 3 blocks
+==10363==         suppressed: 0 bytes in 0 blocks
+==10363== Reachable blocks (those to which a pointer was found) are not shown.
+==10363== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==10363== 
+==10363== For counts of detected and suppressed errors, rerun with: -v
+==10363== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

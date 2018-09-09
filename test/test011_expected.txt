@@ -1,2 +1,2 @@
-Line 1: syntax error near "static"
+Line 1: syntax error in
 RETURN CODE: 1

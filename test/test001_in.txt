@@ -122,6 +122,34 @@ string func1( const float param1 )
         } while ( false );
     } while ( false );
 
+    switch ( x ) {
+
+    };
+
+    switch ( x ? x + 1 : y ? true : false ) {
+        int y;
+
+        case 1:
+            y = 1;
+            output y[1+4];
+            break;
+        case 2:
+            y = 15;
+            output y[!3]$teste;
+        case 3:
+            y = 27;
+            output y;
+            break;
+
+        continue;
+    };
+
+    switch ( x ) {
+        switch ( x ) {
+
+        };
+    };
+
     return "OKAY";
 }
 

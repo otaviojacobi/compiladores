@@ -1,2 +1,2 @@
-Line 2: syntax error near "true"
+Line 2: syntax error in
 RETURN CODE: 1

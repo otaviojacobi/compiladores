@@ -73,11 +73,11 @@ MULTI_LINE_COMMENT_END    \*\/
 {SINGLE_LINE_COMMENT}       {}
 {MULTI_LINE_COMMENT_START}  { BEGIN(BLOCK_COMMENT); comment_start_line = cur_line; }
 <BLOCK_COMMENT>{
-	<<EOF>>			{ BEGIN(CODE); cur_line = comment_start_line; return TOKEN_ERRO; }
-	{NEW_LINE}   ++cur_line;
-	\* 		{ /* flex always matches the string with more text, therefore this will not interfere with the \*\/ match */ }
-	\*\/         BEGIN(CODE);
-	[^\*\n]* 	{/* stops matching when finds either a \n or a * character */}
+    <<EOF>>      { BEGIN(CODE); cur_line = comment_start_line; return TOKEN_ERRO; }
+    {NEW_LINE}   ++cur_line;
+    \*           { /* flex always matches the string with more text, therefore this will not interfere with the \*\/ match */ }
+    \*\/         BEGIN(CODE);
+    [^\*\n]*     {/* stops matching when finds either a \n or a * character */}
 }
 
 {IDENT}           return TK_IDENTIFICADOR;
@@ -90,5 +90,5 @@ int get_line_number(void) {
 }
 
 void yyerror (char const *error) {
-   fprintf (stderr, "Line %d: %s near \"%s\"",get_line_number(), error, yytext);
+   fprintf (stderr, "Line %d: %s in\n",get_line_number(), error);
 }

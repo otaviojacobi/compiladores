@@ -1,2 +1,2 @@
-Line 4: syntax error near ""teste""
+Line 4: syntax error in
 RETURN CODE: 1

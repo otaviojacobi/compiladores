@@ -3,6 +3,12 @@ int yylex(void);
 void yyerror (char const *s);
 %}
 
+%defines
+%union {
+  double      value;
+  char        *string;
+}
+
 %token TK_PR_INT
 %token TK_PR_FLOAT
 %token TK_PR_BOOL
@@ -71,8 +77,8 @@ void yyerror (char const *s);
 
 %%
 
-programa: programa start | start;
-start: new_type_decl | global_var_decl | func;
+programa: programa_rec;
+programa_rec: programa_rec new_type_decl | programa_rec global_var_decl | programa_rec func | %empty;
 
 std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
@@ -112,12 +118,14 @@ param:  std_type TK_IDENTIFICADOR
 func_body: command_block;
 
 command_block: '{' command_seq '}' | '{' '}';
-command_seq: command_seq simple_command | simple_command;
-command_list: command_list ',' command_no_comma | command_no_comma;
+command_seq: command_seq simple_command | simple_command | command_seq TK_PR_CASE TK_LIT_INT ':' | TK_PR_CASE TK_LIT_INT ':';
+for_command_list: for_command_list ',' command_in_for | command_in_for;
 
-simple_command: command_no_comma ';' | command_with_comma ';';
+simple_command: all_command ';';
 
-command_no_comma: command_block
+all_command: command_in_for | command_not_in_for;
+
+command_in_for:     command_block
                   | local_var_decl
                   | attribution
                   | input
@@ -131,8 +139,9 @@ command_no_comma: command_block
                   | pipe_command
 ;
 
-command_with_comma: output;
-
+command_not_in_for:  output;
+                   | switch
+;
 
 local_var_decl: TK_PR_STATIC local_var_static_consumed | local_var_static_consumed;
 local_var_static_consumed: TK_PR_CONST local_var_const_consumed | local_var_const_consumed;
@@ -158,7 +167,7 @@ conditional_command: TK_PR_IF '(' expression ')' TK_PR_THEN command_block
 ;
 
 iteractive_command:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block
-                   | TK_PR_FOR '(' command_list ':' expression ':' command_list ')' command_block
+                   | TK_PR_FOR '(' for_command_list ':' expression ':' for_command_list ')' command_block
                    | TK_PR_WHILE '(' expression ')' TK_PR_DO command_block
                    | TK_PR_DO  command_block TK_PR_WHILE '(' expression ')'
 ;
@@ -171,6 +180,8 @@ pipe_rec:  pipe_rec TK_OC_FORWARD_PIPE func_call
          | pipe_rec TK_OC_BASH_PIPE func_call
          | func_call
 ;
+
+switch: TK_PR_SWITCH '(' expression ')' command_block;
 
 expression_list: expression_list ',' expression | expression;
 expression:  '(' expression ')'

@@ -1,5 +1,1 @@
-1,2c1
-< Error on line: 1
-< syntax error
----
-> Line 1: syntax error near "["
+Files test/test006_out.txt and test/test006_expected.txt are identical

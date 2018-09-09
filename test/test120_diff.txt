@@ -1,0 +1,1 @@
+Files test/test120_out.txt and test/test120_expected.txt are identical

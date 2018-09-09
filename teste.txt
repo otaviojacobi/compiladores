@@ -1,4 +1,3 @@
-static bool func1()
-{
-    int variavel <= 4 - 2;
+int main() {
+  f(x) %>% g(., .);
 }

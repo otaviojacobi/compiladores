@@ -1,2 +1,2 @@
-Line 1: syntax error near "<="
+Line 1: syntax error in
 RETURN CODE: 1

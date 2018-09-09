@@ -1,58 +1,21 @@
-==2296== Memcheck, a memory error detector
-==2296== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==2296== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
-==2296== Command: ./etapa2
-==2296== 
-==2296== 
-==2296== Process terminating with default action of signal 2 (SIGINT)
-==2296==    at 0x401A3FB: open (open64.c:47)
-==2296==    by 0x4006DC5: open_verify.constprop.8 (dl-load.c:1723)
-==2296==    by 0x40075AC: open_path (dl-load.c:2052)
-==2296==    by 0x4008A88: _dl_map_object (dl-load.c:2292)
-==2296==    by 0x400D061: openaux (dl-deps.c:63)
-==2296==    by 0x40194DA: _dl_catch_exception (dl-error-skeleton.c:196)
-==2296==    by 0x400D2F2: _dl_map_object_deps (dl-deps.c:249)
-==2296==    by 0x4003D95: dl_main (rtld.c:1726)
-==2296==    by 0x401862F: _dl_sysdep_start (dl-sysdep.c:253)
-==2296==    by 0x40020D7: _dl_start_final (rtld.c:414)
-==2296==    by 0x40020D7: _dl_start (rtld.c:521)
-==2296==    by 0x4001217: ??? (in /usr/lib/x86_64-linux-gnu/ld-2.27.so)
-==2296== Jump to the invalid address stated on the next line
-==2296==    at 0x1036: ???
-==2296==    by 0x4006DC5: open_verify.constprop.8 (dl-load.c:1723)
-==2296==    by 0x40075AC: open_path (dl-load.c:2052)
-==2296==    by 0x4008A88: _dl_map_object (dl-load.c:2292)
-==2296==    by 0x400D061: openaux (dl-deps.c:63)
-==2296==    by 0x40194DA: _dl_catch_exception (dl-error-skeleton.c:196)
-==2296==    by 0x400D2F2: _dl_map_object_deps (dl-deps.c:249)
-==2296==    by 0x4003D95: dl_main (rtld.c:1726)
-==2296==    by 0x401862F: _dl_sysdep_start (dl-sysdep.c:253)
-==2296==    by 0x40020D7: _dl_start_final (rtld.c:414)
-==2296==    by 0x40020D7: _dl_start (rtld.c:521)
-==2296==    by 0x4001217: ??? (in /usr/lib/x86_64-linux-gnu/ld-2.27.so)
-==2296==  Address 0x1036 is not stack'd, malloc'd or (recently) free'd
-==2296== 
-==2296== 
-==2296== Process terminating with default action of signal 11 (SIGSEGV)
-==2296==  Bad permissions for mapped region at address 0x1036
-==2296==    at 0x1036: ???
-==2296==    by 0x4006DC5: open_verify.constprop.8 (dl-load.c:1723)
-==2296==    by 0x40075AC: open_path (dl-load.c:2052)
-==2296==    by 0x4008A88: _dl_map_object (dl-load.c:2292)
-==2296==    by 0x400D061: openaux (dl-deps.c:63)
-==2296==    by 0x40194DA: _dl_catch_exception (dl-error-skeleton.c:196)
-==2296==    by 0x400D2F2: _dl_map_object_deps (dl-deps.c:249)
-==2296==    by 0x4003D95: dl_main (rtld.c:1726)
-==2296==    by 0x401862F: _dl_sysdep_start (dl-sysdep.c:253)
-==2296==    by 0x40020D7: _dl_start_final (rtld.c:414)
-==2296==    by 0x40020D7: _dl_start (rtld.c:521)
-==2296==    by 0x4001217: ??? (in /usr/lib/x86_64-linux-gnu/ld-2.27.so)
-==2296== 
-==2296== HEAP SUMMARY:
-==2296==     in use at exit: 0 bytes in 0 blocks
-==2296==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated
-==2296== 
-==2296== All heap blocks were freed -- no leaks are possible
-==2296== 
-==2296== For counts of detected and suppressed errors, rerun with: -v
-==2296== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+==10318== Memcheck, a memory error detector
+==10318== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==10318== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==10318== Command: ./etapa2
+==10318== 
+==10318== 
+==10318== HEAP SUMMARY:
+==10318==     in use at exit: 16,458 bytes in 3 blocks
+==10318==   total heap usage: 4 allocs, 1 frees, 24,650 bytes allocated
+==10318== 
+==10318== LEAK SUMMARY:
+==10318==    definitely lost: 0 bytes in 0 blocks
+==10318==    indirectly lost: 0 bytes in 0 blocks
+==10318==      possibly lost: 0 bytes in 0 blocks
+==10318==    still reachable: 16,458 bytes in 3 blocks
+==10318==         suppressed: 0 bytes in 0 blocks
+==10318== Reachable blocks (those to which a pointer was found) are not shown.
+==10318== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==10318== 
+==10318== For counts of detected and suppressed errors, rerun with: -v
+==10318== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
