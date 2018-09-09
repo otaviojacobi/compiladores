@@ -118,10 +118,10 @@ command_list: command_list ',' command_no_comma | command_no_comma;
 simple_command: command_no_comma ';' | command_with_comma ';';
 
 command_no_comma: command_block
-                  | local_var_decl 
-                  | attribution 
-                  | input 
-                  | shift_cmd 
+                  | local_var_decl
+                  | attribution
+                  | input
+                  | shift_cmd
                   | return
                   | func_call
                   | TK_PR_BREAK
@@ -133,15 +133,12 @@ command_no_comma: command_block
 
 command_with_comma: output;
 
-local_var_decl: lv_type TK_IDENTIFICADOR | lv_type TK_IDENTIFICADOR TK_OC_LE tk_id_or_lit;
-lv_type:  TK_PR_STATIC TK_PR_CONST std_type 
-        | TK_PR_STATIC std_type 
-        | TK_PR_CONST std_type
-        | std_type
-        | TK_PR_STATIC TK_PR_CONST TK_IDENTIFICADOR 
-        | TK_PR_STATIC TK_IDENTIFICADOR 
-        | TK_PR_CONST TK_IDENTIFICADOR
-        | TK_IDENTIFICADOR
+
+local_var_decl: TK_PR_STATIC local_var_static_consumed | local_var_static_consumed;
+local_var_static_consumed: TK_PR_CONST local_var_const_consumed | local_var_const_consumed;
+local_var_const_consumed:  std_type TK_IDENTIFICADOR 
+                         | TK_IDENTIFICADOR TK_IDENTIFICADOR
+                         | std_type TK_IDENTIFICADOR TK_OC_LE tk_id_or_lit
 ;
 
 attribution: identificador_accessor '=' expression;
