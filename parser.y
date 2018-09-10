@@ -131,16 +131,19 @@ command_in_for:     command_block
                   | input
                   | shift_cmd
                   | return
-                  | func_call
                   | TK_PR_BREAK
                   | TK_PR_CONTINUE
                   | conditional_command
-                  | iteractive_command
+                  | foreach
+                  | while_do
+                  | do_while
                   | pipe_command
 ;
 
 command_not_in_for:  output;
                    | switch
+                   | func_call
+                   | for
 ;
 
 local_var_decl: TK_PR_STATIC local_var_static_consumed | local_var_static_consumed;
@@ -166,11 +169,10 @@ conditional_command: TK_PR_IF '(' expression ')' TK_PR_THEN command_block
                    | TK_PR_IF '(' expression ')' TK_PR_THEN command_block TK_PR_ELSE command_block
 ;
 
-iteractive_command:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block
-                   | TK_PR_FOR '(' for_command_list ':' expression ':' for_command_list ')' command_block
-                   | TK_PR_WHILE '(' expression ')' TK_PR_DO command_block
-                   | TK_PR_DO  command_block TK_PR_WHILE '(' expression ')'
-;
+foreach:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block;
+for:      TK_PR_FOR '(' for_command_list ':' expression ':' for_command_list ')' command_block;
+while_do: TK_PR_WHILE '(' expression ')' TK_PR_DO command_block;
+do_while: TK_PR_DO  command_block TK_PR_WHILE '(' expression ')';
 
 pipe_command:  pipe_rec TK_OC_FORWARD_PIPE func_call
              | pipe_rec TK_OC_BASH_PIPE func_call
