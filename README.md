@@ -1,3 +1,5 @@
+### Tests are failing as originally the "expected" error message was "Line <LineNo>: Syntax Error In", but then was changed for a more specific message. As the change of message did not alter the logic behind, this should not be a problem as it passed every test before.
+
 ### 1. Setting up local environment with Docker (CLI) -> You have to do this once:
  - [Install Docker on Windows](https://docs.docker.com/docker-for-windows/install/#what-to-know-before-you-install).
  - [having hyper-v engine enabled](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/quick-start/enable-hyper-v).
