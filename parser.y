@@ -2,7 +2,7 @@
 int yylex(void);
 void yyerror (char const *s);
 %}
-
+%error-verbose
 %defines
 %union {
   double      value;

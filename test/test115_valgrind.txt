@@ -1,22 +1,22 @@
-==1090== Memcheck, a memory error detector
-==1090== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==1090== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
-==1090== Command: ./etapa2
-==1090== 
+==1102== Memcheck, a memory error detector
+==1102== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1102== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==1102== Command: ./etapa2
+==1102== 
 Line 2: syntax error in
-==1090== 
-==1090== HEAP SUMMARY:
-==1090==     in use at exit: 16,458 bytes in 3 blocks
-==1090==   total heap usage: 4 allocs, 1 frees, 24,650 bytes allocated
-==1090== 
-==1090== LEAK SUMMARY:
-==1090==    definitely lost: 0 bytes in 0 blocks
-==1090==    indirectly lost: 0 bytes in 0 blocks
-==1090==      possibly lost: 0 bytes in 0 blocks
-==1090==    still reachable: 16,458 bytes in 3 blocks
-==1090==         suppressed: 0 bytes in 0 blocks
-==1090== Reachable blocks (those to which a pointer was found) are not shown.
-==1090== To see them, rerun with: --leak-check=full --show-leak-kinds=all
-==1090== 
-==1090== For counts of detected and suppressed errors, rerun with: -v
-==1090== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==1102== 
+==1102== HEAP SUMMARY:
+==1102==     in use at exit: 16,458 bytes in 3 blocks
+==1102==   total heap usage: 4 allocs, 1 frees, 20,554 bytes allocated
+==1102== 
+==1102== LEAK SUMMARY:
+==1102==    definitely lost: 0 bytes in 0 blocks
+==1102==    indirectly lost: 0 bytes in 0 blocks
+==1102==      possibly lost: 0 bytes in 0 blocks
+==1102==    still reachable: 16,458 bytes in 3 blocks
+==1102==         suppressed: 0 bytes in 0 blocks
+==1102== Reachable blocks (those to which a pointer was found) are not shown.
+==1102== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==1102== 
+==1102== For counts of detected and suppressed errors, rerun with: -v
+==1102== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

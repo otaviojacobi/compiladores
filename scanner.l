@@ -90,5 +90,5 @@ int get_line_number(void) {
 }
 
 void yyerror (char const *error) {
-   fprintf (stderr, "Line %d: %s in\n",get_line_number(), error);
+   fprintf (stderr, "Line %d: %s\n", get_line_number(), error);
 }
