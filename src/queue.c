@@ -2,6 +2,10 @@
 
 queue_node_t *create_queue_node(void *value) {
   queue_node_t *new_node = (queue_node_t*)malloc(sizeof(queue_node_t));
+
+  if(!new_node)
+    kill("Could not allocate memory for queue node");
+
   new_node->value = value;
   new_node->next = NULL;
   return new_node;
@@ -9,6 +13,10 @@ queue_node_t *create_queue_node(void *value) {
 
 queue_t *create_queue() {
   queue_t *new_queue = (queue_t*)malloc(sizeof(queue_t));
+
+  if(!new_queue)
+    kill("Could not allocate memory for queue");
+
   new_queue->front = NULL;
   new_queue->rear = NULL;
   return new_queue;

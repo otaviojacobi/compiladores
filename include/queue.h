@@ -2,6 +2,7 @@
 #define __QUEUE_H
 
 #include <stdlib.h>
+#include "utils.h"
 
 typedef struct queue_node {
   void *value;

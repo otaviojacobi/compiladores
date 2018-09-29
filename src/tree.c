@@ -44,7 +44,6 @@ void print_BFS(tree_node_t *head) {
   queue_t *q = create_queue();
   tree_node_t *current_son;
 
-
   queue_push(q, head);
   while(!queue_is_empty(q)) {
     queue_node_t* _node = queue_pop(q);
@@ -61,7 +60,6 @@ void print_BFS(tree_node_t *head) {
 void print_DFS(tree_node_t *head) {
   stack_t *s = create_stack();
   tree_node_t *current_son;
-
 
   stack_push(s, head);
   while(!stack_is_empty(s)) {

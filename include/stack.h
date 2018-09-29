@@ -2,6 +2,7 @@
 #define __STACK_H
 
 #include <stdlib.h>
+#include "utils.h"
 
 typedef struct stack_node {
   void *value;

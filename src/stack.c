@@ -2,6 +2,10 @@
 
 stack_node_t *create_stack_node(void *value) {
   stack_node_t *new_node = (stack_node_t*)malloc(sizeof(stack_node_t));
+
+  if(!new_node)
+    kill("Could not allocate memory for stack node");
+
   new_node->value = value;
   new_node->next = NULL;
   return new_node;
@@ -9,6 +13,10 @@ stack_node_t *create_stack_node(void *value) {
 
 stack_t *create_stack() {
   stack_t *new_stack = (stack_t*)malloc(sizeof(stack_t));
+
+  if(!new_stack)
+    kill("Could not allocate memory for stack");
+
   new_stack->front = NULL;
   new_stack->rear = NULL;
   return new_stack;
