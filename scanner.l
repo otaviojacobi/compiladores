@@ -82,7 +82,7 @@ MULTI_LINE_COMMENT_END    \*\/
     [^\*\n]*     {/* stops matching when finds either a \n or a * character */}
 }
 
-{IDENT}           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, IDENTIFICADOR, strdup(yytext));return TK_IDENTIFICADOR; }
+{IDENT}           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, IDENTIFICATOR, strdup(yytext));return TK_IDENTIFICADOR; }
 .                 return TOKEN_ERRO;
 
 %%
@@ -109,7 +109,7 @@ valor_lexico_t* construct_valor_lexico(int i, token_type_t type, char* value) {
       break;
     case LITERAL_CHAR: vl->value.charValue = value[1];
       break;
-    case IDENTIFICADOR:
+    case IDENTIFICATOR:
     case LITERAL_STRING: vl->value.stringValue = value;
       break;
     default: yyerror("Could find the given type.");
