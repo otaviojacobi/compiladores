@@ -11,7 +11,10 @@ clean:
 	rm -f lex.yy.c
 	rm -f parser.tab.c
 	rm -f parser.tab.h
+	rm -f sample
 	find . -type f -name '*.log' -delete
 
+sample:
+	gcc tree_sample.c src/utils.c src/tree.c src/queue.c src/stack.c -o sample -Iinclude
 test:
 	./test.sh
