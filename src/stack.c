@@ -1,4 +1,4 @@
-#include "stack.h"
+#include "stacK.h"
 
 stack_node_t *create_stack_node(void *value) {
   stack_node_t *new_node = (stack_node_t*)malloc(sizeof(stack_node_t));
@@ -22,30 +22,25 @@ void stack_push(stack_t *s, void* value) {
     return;
   }
 
-  s->rear->next = tmp;
-  s->rear = tmp;
+  tmp->next = s->front;
+  s->front = tmp;
 }
 
-stack_node_t *stack_pop(stack_t *s) {
-  if(s->front == NULL)
+stack_node_t *stack_pop(stack_t *S) {
+  if(S->front == NULL)
     return NULL;
-  
-  stack_node_t *tmp = s->rear;
-  stack_node_t *new_rear = s->front;
 
-  while(new_rear->next->next != NULL)
-    new_rear = new_rear->next;
+  stack_node_t *tmp = S->front;
+  S->front = S->front->next;
 
-  s->rear = new_rear;
-
-  if(s->front == NULL)
-    s->rear = NULL;
+  if(S->front == NULL)
+    S->rear = NULL;
 
   return tmp;  
 }
 
-int stack_is_empty(stack_t *s) {
-  if(s->rear == NULL && s->front == NULL)
+int stack_is_empty(stack_t *S) {
+  if(S->rear == NULL && S->front == NULL)
     return 1;
   return 0;
 }

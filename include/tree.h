@@ -10,8 +10,10 @@
 typedef struct tree_node {
     void *value;
     int childAmount;
-    struct tree_node* firstChild;
-    struct tree_node* brother;
+    struct tree_node* first_child;
+    struct tree_node* last_child;
+    struct tree_node* brother_next;
+    struct tree_node* brother_prev;
 } tree_node_t;
 
 
