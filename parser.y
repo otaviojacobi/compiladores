@@ -45,18 +45,28 @@
 %token TK_OC_SR
 %token TK_OC_FORWARD_PIPE
 %token TK_OC_BASH_PIPE
-%token <valor_lexico> TK_LIT_INT
-%token <valor_lexico> TK_LIT_FLOAT
-%token <valor_lexico> TK_LIT_FALSE
-%token <valor_lexico> TK_LIT_TRUE
-%token <valor_lexico> TK_LIT_CHAR
-%token <valor_lexico> TK_LIT_STRING
+%token TK_LIT_INT
+%token TK_LIT_FLOAT
+%token TK_LIT_FALSE
+%token TK_LIT_TRUE
+%token TK_LIT_CHAR
+%token TK_LIT_STRING
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
+
+
+%type <valor_lexico> TK_LIT_INT
+%type <valor_lexico> TK_LIT_FLOAT
+%type <valor_lexico> TK_LIT_FALSE
+%type <valor_lexico> TK_LIT_TRUE
+%type <valor_lexico> TK_LIT_CHAR
+%type <valor_lexico> TK_LIT_STRING
+%type <valor_lexico> TK_IDENTIFICADOR
 
 %union {
   valor_lexico_t* valor_lexico;
 }
+
 
 
 //The first precedence/associativity declaration in the file declares the operators whose precedence is lowest
