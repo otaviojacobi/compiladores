@@ -1,6 +1,7 @@
 %code requires {
   #include "valor_lexico.h"
   #include "stdio.h"
+  #include "tree.h"
 }
 
 %{
@@ -62,9 +63,32 @@
 %type <valor_lexico> TK_LIT_CHAR
 %type <valor_lexico> TK_LIT_STRING
 %type <valor_lexico> TK_IDENTIFICADOR
+%type <node> tk_numeric_lit
+%type <node> tk_lit
+%type <node> tk_id_or_lit
+%type <node> std_type
+%type <node> protection
+%type <node> identificador_accessor
+%type <node> command_seq
+%type <node> simple_command
+%type <node> all_command
+%type <node> command_in_for
+%type <node> command_not_in_for
+%type <node> attribution
+%type <node> input
+%type <node> output
+%type <node> return
+%type <node> conditional_command
+%type <node> foreach
+%type <node> for
+%type <node> do_while
+%type <node> while_do
+%type <node> switch
+
 
 %union {
   valor_lexico_t* valor_lexico;
+  tree_node_t* node;
 }
 
 
@@ -94,16 +118,21 @@
 %%
 
 programa: programa_rec;
-programa_rec: programa_rec new_type_decl | programa_rec global_var_decl | programa_rec func | %empty;
+programa_rec: programa_rec new_type_decl
+            | programa_rec global_var_decl 
+            | programa_rec func 
+            | %empty;
 
-std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
-protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
-tk_numeric_lit: TK_LIT_INT { printf("%d\n", $1->value.intValue); } | TK_LIT_FLOAT { printf("%f\n", $1->value.floatValue); };
-tk_lit: tk_numeric_lit | TK_LIT_FALSE { printf("%d\n", $1->value.boolValue); } | TK_LIT_TRUE { printf("%d\n", $1->value.boolValue); } | TK_LIT_CHAR { printf("%c\n", $1->value.charValue); } | TK_LIT_STRING { printf("%s\n", $1->value.stringValue); }
-tk_id_or_lit: tk_lit | TK_IDENTIFICADOR;
+std_type: TK_PR_INT { $$ = make_node($1); } | TK_PR_FLOAT { $$ = make_node($1); } | TK_PR_BOOL { $$ = make_node($1); } | TK_PR_CHAR { $$ = make_node($1); } | TK_PR_STRING { $$ = make_node($1); };
+protection: TK_PR_PRIVATE { $$ = make_node($1); } | TK_PR_PUBLIC { $$ = make_node($1); } | TK_PR_PROTECTED { $$ = make_node($1); };
+tk_numeric_lit: TK_LIT_INT { $$ = make_node($1); } 
+              | TK_LIT_FLOAT { $$ = make_node($1); };
 
-identificador_accessor:  TK_IDENTIFICADOR
-                       | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR 
+tk_lit: tk_numeric_lit { $$ = $1; } | TK_LIT_FALSE { $$ = make_node($1); } | TK_LIT_TRUE { $$ = make_node($1); } | TK_LIT_CHAR { $$ = make_node($1); } | TK_LIT_STRING { $$ = make_node($1); }
+tk_id_or_lit: tk_lit { $$ = $1; } | TK_IDENTIFICADOR { $$ = make_node($1); } ;
+
+identificador_accessor:  TK_IDENTIFICADOR { $$ = make_node($1); }
+                       | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR
                        | TK_IDENTIFICADOR '[' expression ']'
                        | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
 ;
@@ -119,8 +148,8 @@ func: func_head func_body;
 
 func_head:  std_type TK_IDENTIFICADOR param_list 
           | TK_PR_STATIC std_type TK_IDENTIFICADOR param_list
-          | TK_IDENTIFICADOR std_type TK_IDENTIFICADOR param_list
-          | TK_PR_STATIC TK_IDENTIFICADOR std_type TK_IDENTIFICADOR param_list
+          | TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
+          | TK_PR_STATIC TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 ;
 
 param_list: '(' parameters ')' | '(' ')';
@@ -134,61 +163,63 @@ param:  std_type TK_IDENTIFICADOR
 func_body: command_block;
 
 command_block: '{' command_seq '}' | '{' '}';
+
 command_seq: command_seq simple_command | simple_command | command_seq TK_PR_CASE TK_LIT_INT ':' | TK_PR_CASE TK_LIT_INT ':';
+
 for_command_list: for_command_list ',' command_in_for | command_in_for;
 
-simple_command: all_command ';';
+simple_command: all_command ';' { $$ = $1; };
 
-all_command: command_in_for | command_not_in_for;
+all_command: command_in_for { $$ = $1; } | command_not_in_for { $$ = $1; };
 
 command_in_for:     command_block
                   | local_var_decl
-                  | attribution
-                  | input
+                  | attribution { $$ = $1; }
+                  | input { $$ = $1; }
                   | shift_cmd
-                  | return
-                  | TK_PR_BREAK
-                  | TK_PR_CONTINUE
-                  | conditional_command
-                  | foreach
-                  | while_do
-                  | do_while
+                  | return { $$ = $1; }
+                  | TK_PR_BREAK { $$ = make_node($1); }
+                  | TK_PR_CONTINUE { $$ = make_node($1); }
+                  | conditional_command { $$ = $1; }
+                  | foreach { $$ = $1; }
+                  | while_do { $$ = $1; }
+                  | do_while { $$ = $1; }
                   | pipe_command
 ;
 
-command_not_in_for:  output;
-                   | switch
+command_not_in_for:  output { $$ = $1; }
+                   | switch { $$ = $1; }
                    | func_call
-                   | for
+                   | for { $$ = $1; }
 ;
 
 local_var_decl: TK_PR_STATIC local_var_static_consumed | local_var_static_consumed;
 local_var_static_consumed: TK_PR_CONST local_var_const_consumed | local_var_const_consumed;
-local_var_const_consumed:  std_type TK_IDENTIFICADOR 
+local_var_const_consumed:  std_type TK_IDENTIFICADOR
                          | TK_IDENTIFICADOR TK_IDENTIFICADOR
                          | std_type TK_IDENTIFICADOR TK_OC_LE tk_id_or_lit
 ;
 
-attribution: identificador_accessor '=' expression;
+attribution: identificador_accessor '=' expression { $$ = make_node($2); insert_child($$, $1); insert_child($$, $3); };
 
-input: TK_PR_INPUT expression;
-output: TK_PR_OUTPUT expression_list;
+input: TK_PR_INPUT expression { $$ = make_node($1); insert_child($$, $2); };
+output: TK_PR_OUTPUT expression_list { $$ = make_node($1); insert_child($$, $2); };
 
 func_call: TK_IDENTIFICADOR '(' args ')' | TK_IDENTIFICADOR '(' ')';
 args: args ',' expression | args ',' '.' | '.' | expression;
 
 shift_cmd: identificador_accessor TK_OC_SL expression | identificador_accessor TK_OC_SR expression;
 
-return: TK_PR_RETURN expression;
+return: TK_PR_RETURN expression { $$ = make_node($1); insert_child($$, $2); };
 
-conditional_command: TK_PR_IF '(' expression ')' TK_PR_THEN command_block
-                   | TK_PR_IF '(' expression ')' TK_PR_THEN command_block TK_PR_ELSE command_block
+conditional_command: TK_PR_IF '(' expression ')' TK_PR_THEN command_block { $$ = make_node($1); insert_child($$, $3); insert_child($$, $6);  }
+                   | TK_PR_IF '(' expression ')' TK_PR_THEN command_block TK_PR_ELSE command_block { $$ = make_node($1); insert_child($$, $3); insert_child($$, $6); insert_child($$, $8); }
 ;
 
-foreach:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block;
-for:      TK_PR_FOR '(' for_command_list ':' expression ':' for_command_list ')' command_block;
-while_do: TK_PR_WHILE '(' expression ')' TK_PR_DO command_block;
-do_while: TK_PR_DO  command_block TK_PR_WHILE '(' expression ')';
+foreach:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block { $$ = make_node($1); insert_child($$, $3); insert_child($$, $5); insert_child($$, $7); };
+for:      TK_PR_FOR '(' for_command_list ':' expression ':' for_command_list ')' command_block { $$ = make_node($1); insert_child($$, $3); insert_child($$, $5); insert_child($$, $7); insert_child($$, $9); };
+while_do: TK_PR_WHILE '(' expression ')' TK_PR_DO command_block { $$ = make_node($1); insert_child($$, $3); insert_child($$, $6); };
+do_while: TK_PR_DO command_block TK_PR_WHILE '(' expression ')' { $$ = make_node($1);  insert_child($$, $2);  insert_child($$, $5); };
 
 pipe_command:  pipe_rec TK_OC_FORWARD_PIPE func_call
              | pipe_rec TK_OC_BASH_PIPE func_call
@@ -199,7 +230,7 @@ pipe_rec:  pipe_rec TK_OC_FORWARD_PIPE func_call
          | func_call
 ;
 
-switch: TK_PR_SWITCH '(' expression ')' command_block;
+switch: TK_PR_SWITCH '(' expression ')' command_block { $$ = make_node($1); insert_child($$, $3); insert_child($$, $5); };
 
 expression_list: expression_list ',' expression | expression;
 expression:  '(' expression ')'

@@ -1,4 +1,4 @@
-#include "stacK.h"
+#include "stack.h"
 
 stack_node_t *create_stack_node(void *value) {
   stack_node_t *new_node = (stack_node_t*)malloc(sizeof(stack_node_t));
