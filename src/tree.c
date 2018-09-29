@@ -14,7 +14,10 @@ tree_node_t *make_node(void *value) {
   new_node->value = value;
   new_node->childAmount = 0;
   new_node->first_child = NULL;
+  new_node->last_child = NULL;
   new_node->brother_next = NULL;
+  new_node->brother_prev = NULL;
+
 }
 
 tree_node_t *insert_child(tree_node_t *father, tree_node_t *children) {
@@ -28,8 +31,10 @@ tree_node_t *insert_child(tree_node_t *father, tree_node_t *children) {
       current_son = current_son->brother_next;
     }
     current_son->brother_next = children;
+    current_son->brother_next->brother_prev = current_son;
   }
 
+  father->last_child = children;
   father->childAmount++;
 
   return father;
@@ -63,10 +68,10 @@ void print_DFS(tree_node_t *head) {
     stack_node_t* _node = stack_pop(s);
     tree_node_t* node = _node->value;
     printf("%d\n", *((int*)node->value));
-    current_son = node->first_child;
+    current_son = node->last_child;
     while(current_son) {
       stack_push(s, current_son);
-      current_son = current_son -> brother_next;
+      current_son = current_son -> brother_prev;
     }
   }
 }
