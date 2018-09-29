@@ -1,4 +1,0 @@
-int func1(char param1) {
-    MinhaClasse a;
-    a$pessoa$nome = "Francis";
-}

@@ -1,4 +1,0 @@
-func1(int param1)
-{
-    
-}

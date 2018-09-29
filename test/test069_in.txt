@@ -1,7 +1,0 @@
-int main()
-{
-  switch (x) {
-    case 'a':
-      y = 2;
-  };
-}

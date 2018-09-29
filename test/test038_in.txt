@@ -1,8 +1,0 @@
-class
-minhaClasse [
-    int id
-    : string nome
-    : int idade
-    : bool morto
-    : 
-];

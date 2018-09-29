@@ -1,5 +1,0 @@
-int main()
-{
-  if (true) then
-    x = 2;
-}

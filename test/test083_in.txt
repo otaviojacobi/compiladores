@@ -1,5 +1,0 @@
-int main() {
-  foreach( x: int x <= 42) {
-
-  };
-}

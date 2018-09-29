@@ -1,9 +1,11 @@
 %{
 #include "parser.tab.h"
+#include "utils.h"
 int get_line_number(void);
 int cur_line = 1;
 int comment_start_line;
 void print_tkn(char* str);
+valor_lexico_t* construct_valor_lexico();
 %}
 
 INT                       [0-9]+
@@ -58,17 +60,17 @@ MULTI_LINE_COMMENT_END    \*\/
 "!="              return TK_OC_NE;
 "&&"              return TK_OC_AND;
 "||"              return TK_OC_OR;
-"<<"              return TK_OC_SL;  //TODO: check lef/right
-">>"              return TK_OC_SR;  //TODO: check lef/right
+"<<"              return TK_OC_SL;
+">>"              return TK_OC_SR;
 "%>%"             return TK_OC_FORWARD_PIPE;
 "%|%"             return TK_OC_BASH_PIPE;
 
-{INT}             return TK_LIT_INT;
-{FLOAT}|{SCI_NOT} return TK_LIT_FLOAT;
-"false"           return TK_LIT_FALSE;
-"true"            return TK_LIT_TRUE;
-'.'|'\\.'         return TK_LIT_CHAR;
-{STR}             return TK_LIT_STRING;
+{INT}             { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_INT,    strdup(yytext));return TK_LIT_INT;    }
+{FLOAT}|{SCI_NOT} { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_FLOAT,  strdup(yytext));return TK_LIT_FLOAT;  }
+"false"           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_BOOL,   strdup(yytext));return TK_LIT_FALSE;  }
+"true"            { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_BOOL,   strdup(yytext));return TK_LIT_TRUE;   }
+'.'               { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_CHAR,   strdup(yytext));return TK_LIT_CHAR;   }
+{STR}             { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_STRING, strdup(yytext));return TK_LIT_STRING; }
 
 {SINGLE_LINE_COMMENT}       {}
 {MULTI_LINE_COMMENT_START}  { BEGIN(BLOCK_COMMENT); comment_start_line = cur_line; }
@@ -91,4 +93,26 @@ int get_line_number(void) {
 
 void yyerror (char const *error) {
    fprintf (stderr, "Line %d: %s\n", get_line_number(), error);
+}
+
+valor_lexico_t* construct_valor_lexico(int i, token_type_t type, char* value) {
+  valor_lexico_t* vl = (valor_lexico_t*)malloc(sizeof(valor_lexico_t));
+  vl->line = i;
+  vl->type = type;
+
+  switch(type) {
+    case LITERAL_INT: vl->value.intValue = atoi(value);
+      break;
+    case LITERAL_FLOAT: vl->value.floatValue = atof(value);
+      break;
+    case LITERAL_BOOL: vl->value.boolValue = strToBool(value);
+      break;
+    case LITERAL_CHAR: vl->value.charValue = value[1];
+      break;
+    case LITERAL_STRING: vl->value.stringValue = value;
+      break;
+    default: yyerror("Could find the given type.");
+  }
+
+  return vl;
 }

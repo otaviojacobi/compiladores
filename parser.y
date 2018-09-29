@@ -1,13 +1,14 @@
-%{
-int yylex(void);
-void yyerror (char const *s);
-%}
-%error-verbose
-%defines
-%union {
-  double      value;
-  char        *string;
+%code requires {
+  #include "valor_lexico.h"
+  #include "stdio.h"
 }
+
+%{
+  int yylex(void);
+  void yyerror (char const *s);
+%}
+
+%error-verbose
 
 %token TK_PR_INT
 %token TK_PR_FLOAT
@@ -44,14 +45,19 @@ void yyerror (char const *s);
 %token TK_OC_SR
 %token TK_OC_FORWARD_PIPE
 %token TK_OC_BASH_PIPE
-%token TK_LIT_INT
-%token TK_LIT_FLOAT
-%token TK_LIT_FALSE
-%token TK_LIT_TRUE
-%token TK_LIT_CHAR
-%token TK_LIT_STRING
+%token <valor_lexico> TK_LIT_INT
+%token <valor_lexico> TK_LIT_FLOAT
+%token <valor_lexico> TK_LIT_FALSE
+%token <valor_lexico> TK_LIT_TRUE
+%token <valor_lexico> TK_LIT_CHAR
+%token <valor_lexico> TK_LIT_STRING
 %token TK_IDENTIFICADOR
 %token TOKEN_ERRO
+
+%union {
+  valor_lexico_t* valor_lexico;
+}
+
 
 //The first precedence/associativity declaration in the file declares the operators whose precedence is lowest
 //the next such declaration declares the operators whose precedence is a little higher, and so on.
@@ -82,8 +88,8 @@ programa_rec: programa_rec new_type_decl | programa_rec global_var_decl | progra
 
 std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
-tk_numeric_lit: TK_LIT_INT | TK_LIT_FLOAT;
-tk_lit: tk_numeric_lit | TK_LIT_FALSE | TK_LIT_TRUE | TK_LIT_CHAR | TK_LIT_STRING;
+tk_numeric_lit: TK_LIT_INT { printf("%d\n", $1->value.intValue); } | TK_LIT_FLOAT { printf("%f\n", $1->value.floatValue); };
+tk_lit: tk_numeric_lit | TK_LIT_FALSE { printf("%d\n", $1->value.boolValue); } | TK_LIT_TRUE { printf("%d\n", $1->value.boolValue); } | TK_LIT_CHAR { printf("%c\n", $1->value.charValue); } | TK_LIT_STRING { printf("%s\n", $1->value.stringValue); }
 tk_id_or_lit: tk_lit | TK_IDENTIFICADOR;
 
 identificador_accessor:  TK_IDENTIFICADOR

@@ -1,4 +1,0 @@
-int func1(static char param1)
-{
-    
-}

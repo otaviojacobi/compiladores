@@ -1,0 +1,15 @@
+bool func1() { 
+    int var;
+    char tst;
+    float oi;
+    bool eFalso;
+    bool eVdd;
+    string agrSim;
+
+    var = 2; 
+    tst = 'p';
+    oi = 334218.0e2;
+    eFalso = false;
+    eVdd = true;
+    agrSim = "AE SAIHEUAH";
+}

@@ -1,5 +1,0 @@
-int main() {
-  foreach( x: true) {
-    int x;
-  }
-}

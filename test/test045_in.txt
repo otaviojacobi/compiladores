@@ -1,4 +1,0 @@
-int func1()
-{
-  output 1 + 2, ;
-}

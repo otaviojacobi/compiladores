@@ -1,8 +1,0 @@
-class
-minhaClasse [
-    int id
-    : static string nome
-    : public const int idade
-    : private static float saldo
-    : const bool morto
-];

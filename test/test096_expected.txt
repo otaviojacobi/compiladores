@@ -1,2 +1,0 @@
-Line 3: syntax error in
-RETURN CODE: 1

@@ -1,5 +1,0 @@
-int main() {
-  for (int x : true : true, false) {
-    int x;
-  };
-}

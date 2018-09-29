@@ -1,1 +1,0 @@
-Files test/test052_out.txt and test/test052_expected.txt are identical
