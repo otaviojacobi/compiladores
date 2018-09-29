@@ -7,3 +7,8 @@ int strToBool(char *boolean) {
     return 0;
   return -1;
 }
+
+void kill(char *message) {
+  printf("%s", message);
+  exit(1);
+}
