@@ -9,13 +9,31 @@ int strToBool(char *boolean) {
 }
 
 char* boolToStr(int boolean) {
-  char *str = (char*) malloc(sizeof(char)*sizeof("false"));
+  char *str = (char*) malloc(sizeof(char)*12);
 
   if(boolean)
     strcpy(str, "true");
   else
     strcpy(str, "false");
 
+  return str;
+}
+
+char* intToStr(int someInt) {
+  char *str = (char*) malloc(sizeof(char)*12);
+  sprintf(str, "%d", someInt);
+  return str;
+}
+
+char* floatToStr(float someFloat) {
+  char *str = (char*) malloc(sizeof(char)*12);
+  sprintf(str, "%f", someFloat);
+  return str;
+}
+
+char* someChar(char someChar) {
+    char *str = (char*) malloc(sizeof(char)*3);
+  sprintf(str, "%c", someChar);
   return str;
 }
 

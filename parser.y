@@ -140,9 +140,9 @@
 programa: programa_rec {arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); InsertChild(arvore, $1);}
 ;
 
-programa_rec:  programa_rec new_type_decl { $$ = $1; }
-             | programa_rec global_var_decl { $$ = $1; }
-             | programa_rec func { InsertChild($2, $1); $$ = $2; }
+programa_rec:  new_type_decl programa_rec  { $$ = $2; }
+             | global_var_decl programa_rec  { $$ = $2; }
+             | func programa_rec { InsertChild($1, $2); $$ = $1; }
              | %empty { $$ = NULL; }
 ;
 

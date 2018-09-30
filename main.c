@@ -14,8 +14,8 @@ void *arvore = NULL;
 int main (int argc, char **argv)
 {
   int ret = yyparse();
-  print_DFS(arvore);
-  //descompila (arvore);
+  // print_DFS(arvore);
+  descompila (arvore);
   libera(arvore);
   arvore = NULL;
   return ret;

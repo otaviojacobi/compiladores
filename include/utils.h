@@ -7,5 +7,9 @@
 
 int strToBool(char *boolean);
 char* boolToStr(int boolean);
+char* intToStr(int someInt);
+char* floatToStr(float someFloat);
+char* charToStr(char someChar);
+
 void kill(char* message);
 #endif
