@@ -26,6 +26,11 @@ void print_BFS(tree_node_t* head);
 void print_DFS(tree_node_t* head);
 void clean_tree_DFS(tree_node_t* head);
 
+void libera(tree_node_t *head);
+void descompila(tree_node_t *head);
+void print_fancy(valor_lexico_t* value, tree_node_t* node);
+
+
 
 
 #endif

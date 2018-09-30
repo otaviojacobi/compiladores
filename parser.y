@@ -67,8 +67,9 @@
 %type <valor_lexico> TK_LIT_CHAR
 %type <valor_lexico> TK_LIT_STRING
 %type <valor_lexico> TK_IDENTIFICADOR
-%type <valor_lexico> func_head
 
+
+%type <node> func_head
 %type <node> programa_rec
 %type <node> func
 %type <node> command_block
@@ -80,6 +81,10 @@
 %type <node> local_var_static_consumed
 %type <node> local_var_const_consumed
 
+%type <node> std_type_node
+%type <node> param
+%type <node> parameters
+%type <node> param_list
 %type <node> attribution
 %type <node> input
 %type <node> shift_cmd
@@ -144,6 +149,23 @@ programa_rec:  programa_rec new_type_decl { $$ = $1; }
 std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
 
+std_type_node: 
+TK_PR_INT {
+  $$ = MakeNode(AST_TYPE_INT, NULL);
+}
+| TK_PR_FLOAT {
+  $$ = MakeNode(AST_TYPE_FLOAT, NULL);
+}
+| TK_PR_BOOL {
+  $$ = MakeNode(AST_TYPE_BOOL, NULL);
+}
+| TK_PR_CHAR {
+  $$ = MakeNode(AST_TYPE_CHAR, NULL);
+}
+| TK_PR_STRING {
+  $$ = MakeNode(AST_TYPE_STRING, NULL);
+};
+
 
 tk_lit:
 TK_LIT_INT       { $$ = MakeNode(AST_TYPE_LITERAL_INT, $1); }
@@ -192,58 +214,101 @@ field: protection std_type TK_IDENTIFICADOR | std_type TK_IDENTIFICADOR;
 global_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';';
 gv_type: TK_PR_STATIC std_type | std_type | TK_PR_STATIC TK_IDENTIFICADOR | TK_IDENTIFICADOR;
 
-func: func_head command_block { $$ = MakeNode(AST_TYPE_FUNCTION, $1); InsertChild($$, $2); };
+func: func_head command_block { $$ = MakeNode(AST_TYPE_FUNCTION, NULL); InsertChild($$, $1); InsertChild($$, $2); };
 
-func_head:  std_type TK_IDENTIFICADOR param_list
+func_head:  std_type_node TK_IDENTIFICADOR param_list
 {
-  $$ = $2;
+  $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
+  InsertChild($$, $1);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, $3);
 }
-| TK_PR_STATIC std_type TK_IDENTIFICADOR param_list
+| TK_PR_STATIC std_type_node TK_IDENTIFICADOR param_list
 {
-  $$ = $3;
+  $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
+  InsertChild($$, $2);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  InsertChild($$, $4);
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 {
-  $$ = $2;
+  $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, $3);
 }
 | TK_PR_STATIC TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 {
-  $$ = $3;
+  $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  InsertChild($$, $4);
 };
 
-param_list: '(' parameters ')' | '(' ')';
-parameters: parameters ',' param | param;
-param:  std_type TK_IDENTIFICADOR 
-      | TK_PR_CONST std_type TK_IDENTIFICADOR
-      | TK_IDENTIFICADOR TK_IDENTIFICADOR
-      | TK_PR_CONST TK_IDENTIFICADOR TK_IDENTIFICADOR
-;
+param_list: '(' parameters ')' { $$ = $2; }| '(' ')' { $$ = NULL; };
+
+parameters: 
+parameters ',' param {
+  if($1 != NULL) {
+    InsertChild($1, $3); 
+    $$ = $1;
+  } else {
+    $$ = $3;
+  }
+}
+| param {
+  $$ = $1;
+};
+
+param:  
+std_type_node TK_IDENTIFICADOR {
+  $$ = MakeNode(AST_TYPE_PARAM, NULL);
+  InsertChild($$, $1);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+}
+
+| TK_PR_CONST std_type_node TK_IDENTIFICADOR {
+  $$ = MakeNode(AST_TYPE_PARAM, NULL);
+  InsertChild($$, $2);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+}
+
+| TK_IDENTIFICADOR TK_IDENTIFICADOR {
+  $$ = MakeNode(AST_TYPE_PARAM, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+}
+
+| TK_PR_CONST TK_IDENTIFICADOR TK_IDENTIFICADOR {
+  $$ = MakeNode(AST_TYPE_PARAM, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+};
 
 command_block: '{' command_seq '}' { $$ = $2; }| '{' '}' { $$ = NULL; };
 
 command_seq: command_seq simple_command
 {
-  if($2 != NULL) {
-    InsertChild($2, $1); 
-    $$ = $2;
-  } else {
+  if($1 != NULL) {
+    InsertChild($1, $2); 
     $$ = $1;
+  } else {
+    $$ = $2;
   }
 }
 | simple_command
 {
   $$ = $1;
-}
-;
+};
 
 for_command_list: 
 for_command_list ',' simple_command_for 
 {
-  if($3 != NULL) {
-    InsertChild($3, $1);
-    $$ = $3;
-  } else {
+  if($1 != NULL) {
+    InsertChild($1, $3);
     $$ = $1;
+  } else {
+    $$ = $3;
   }
 }
 | simple_command_for
@@ -439,7 +504,7 @@ switch: TK_PR_SWITCH '(' expression ')' command_block
 };
 
 expression_list: 
-expression_list ',' expression { $$ = $3;InsertChild($$, $1); }
+expression_list ',' expression { $$ = $1;InsertChild($$, $3); }
 | expression                   { $$ = $1; }
 ;
 expression:  

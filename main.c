@@ -16,7 +16,7 @@ int main (int argc, char **argv)
   int ret = yyparse();
   print_DFS(arvore);
   //descompila (arvore);
-  //libera(arvore);
-  //arvore = NULL;
+  libera(arvore);
+  arvore = NULL;
   return ret;
 }
