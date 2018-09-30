@@ -13,6 +13,9 @@ clean:
 	rm -f parser.tab.h
 	rm -f sample
 	rm -f parser.output
+	rm -f test/*_diff.txt
+	rm -f test/*_out.txt
+	rm -f test/*_valgrind.txt
 	find . -type f -name '*.log' -delete
 
 sample:

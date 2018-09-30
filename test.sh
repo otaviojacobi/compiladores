@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROGRAM='etapa2'
+PROGRAM='etapa3'
 
 RED='\033[0;31m'
 GREEN='\033[0;32m' 
@@ -30,15 +30,17 @@ VALGRINDS_PASSED=0
 TOTAL_TESTS=0
 for TEST_FILE in test/*_in.txt; do
     # build needed paths
-    EXPECTED_FILE=${TEST_FILE//_in/_expected}
+    EXPECTED_FILE=$TEST_FILE
     DIFF_FILE=${TEST_FILE//_in/_diff}
     OUT_FILE=${TEST_FILE//_in/_out}
+    OUT_FILE2=${TEST_FILE//_in/_out2}
     VALGRIND_FILE=${TEST_FILE//_in/_valgrind}
 
     # run the tests
     $(./$PROGRAM < $TEST_FILE > $OUT_FILE 2>&1)
-    $(echo RETURN CODE: $? >> $OUT_FILE)
-    $(diff -ws $OUT_FILE $EXPECTED_FILE > $DIFF_FILE)
+    $(./$PROGRAM < $OUT_FILE > $OUT_FILE2 2>&1)
+    # $(echo RETURN CODE: $? >> $OUT_FILE)
+    $(diff -wBEs $OUT_FILE $OUT_FILE2 > $DIFF_FILE)
     $(valgrind --leak-check=full ./$PROGRAM < $TEST_FILE > $VALGRIND_FILE 2>&1)
 
     # inform test results

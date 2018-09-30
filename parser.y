@@ -82,6 +82,7 @@
 %type <node> local_var_const_consumed
 
 %type <node> std_type_node
+%type <node> std_type
 %type <node> param
 %type <node> parameters
 %type <node> param_list
@@ -146,7 +147,8 @@ programa_rec:  new_type_decl programa_rec  { $$ = $2; }
              | %empty { $$ = NULL; }
 ;
 
-std_type: TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
+std_type: std_type_node { $$ = $1; }; // toask: was there a reason for this?
+//TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
 
 std_type_node: 
@@ -245,13 +247,23 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   InsertChild($$, $4);
 };
 
-param_list: '(' parameters ')' { $$ = $2; }| '(' ')' { $$ = NULL; };
+param_list: '(' parameters ')' { $$ = $2;
+  // before chanding the way parameters are added in a chain to access third parameter ID:
+  //$2->first_child->brother_next->brother_next->brother_next->first_child->brother_next;
+  //printf("value=%s\n", ((valor_lexico_t*)head->value)->value.stringValue);
+  // now it is mounted recursively -> next parameter is always the third child of the previous
+} | '(' ')' { $$ = NULL; };
 
 parameters: 
 parameters ',' param {
   if($1 != NULL) {
-    InsertChild($1, $3); 
+    tree_node_t* aux = $1;
+    while(aux->first_child->brother_next->brother_next) aux = aux->first_child->brother_next->brother_next;
+    InsertChild(aux, $3); 
     $$ = $1;
+    //tree_node_t* head1 = aux->first_child->brother_next;
+    //tree_node_t* head2 = $3->first_child->brother_next;
+    //printf("value=%s added as child of %s\n", ((valor_lexico_t*)head2->value)->value.stringValue, ((valor_lexico_t*)head1->value)->value.stringValue);
   } else {
     $$ = $3;
   }
@@ -285,7 +297,7 @@ std_type_node TK_IDENTIFICADOR {
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
 };
 
-command_block: '{' command_seq '}' { $$ = $2; }| '{' '}' { $$ = NULL; };
+command_block: '{' command_seq '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); InsertChild($$, $2); } | '{' '}' { $$ = NULL; };
 
 command_seq: command_seq simple_command
 {
@@ -298,7 +310,8 @@ command_seq: command_seq simple_command
 }
 | simple_command
 {
-  $$ = $1;
+  $$ = MakeNode(AST_TYPE_COMMAND, NULL);
+  InsertChild($$, $1);
 };
 
 for_command_list: 
@@ -371,12 +384,14 @@ std_type TK_IDENTIFICADOR { $$ = NULL; }
 | std_type TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR
 {
   $$ = MakeNode(AST_TYPE_DECLR_ON_ATTR, NULL);
+  InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $4));
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE tk_lit
 {
   $$ = MakeNode(AST_TYPE_DECLR_ON_ATTR, NULL);
+  InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $4);
 }
@@ -407,8 +422,18 @@ TK_IDENTIFICADOR '(' args ')'
 };
 
 args: 
-args ',' expression  {$$ = $3;InsertChild($$, $1);}
-| args ',' '.'       {$$ = MakeNode(AST_TYPE_DOT, NULL);InsertChild($$, $1);}
+args ',' expression  {
+  $$ = $1;
+  tree_node_t* aux = $$;
+  while(aux->first_child) aux = aux->first_child;
+  InsertChild(aux, $3);
+}
+| args ',' '.'       {
+  $$ = $1;
+  tree_node_t* aux = $$;
+  while(aux->first_child) aux = aux->first_child;
+  InsertChild(aux, MakeNode(AST_TYPE_DOT, NULL));
+}
 | '.'                {$$ = MakeNode(AST_TYPE_DOT, NULL);}
 | expression         {$$ = $1;}
 ;
@@ -504,8 +529,11 @@ switch: TK_PR_SWITCH '(' expression ')' command_block
 };
 
 expression_list: 
-expression_list ',' expression { $$ = $1;InsertChild($$, $3); }
-| expression                   { $$ = $1; }
+expression_list ',' expression { 
+  $$ = $1;
+  InsertChild($$, $3);
+}
+| expression                   { $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL), InsertChild($$, $1); }
 ;
 expression:  
 '(' expression ')'        { $$ = $2; }
@@ -553,7 +581,7 @@ tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico) {
   }
 
   vl->line = 0;
-
+  // toask: freeing vl before
   return make_node(vl);
 }
 

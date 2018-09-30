@@ -78,7 +78,6 @@ void print_type(token_type_t type) {
     case AST_TYPE_PROGRAM_START: printf("AST_TYPE_PROGRAM_START\n");break;
     case AST_TYPE_FUNCTION: printf("AST_TYPE_FUNCTION\n");break;
     case AST_TYPE_FUNCTION_CALL: printf("AST_TYPE_FUNCTION_CALL\n");break;
-    case AST_TYPE_BLOCK: printf("AST_TYPE_BLOCK\n");break;
     case AST_TYPE_VECTOR: printf("AST_TYPE_VECTOR\n");break;
     case AST_TYPE_OBJECT: printf("AST_TYPE_OBJECT\n");break;
     case AST_TYPE_INPUT: printf("AST_TYPE_INPUT\n");break;

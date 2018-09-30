@@ -1,0 +1,5 @@
+int foo() {
+input x[f(x, y) + 1 * 2];
+output x, y, 1 + 1, 1 + 2 * 3, f(x, y);
+
+}
