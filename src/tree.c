@@ -118,8 +118,9 @@ void descompila(tree_node_t *head) {
 
 void print_fancy (tree_node_t* head) {
     valor_lexico_t* value = (valor_lexico_t*)head->value;
-    int header_child_amount;
     tree_node_t* parameter;
+    tree_node_t* aux_node;
+    int i;
 
     switch (value->type) {
 
@@ -129,7 +130,6 @@ void print_fancy (tree_node_t* head) {
         break;
 
       case AST_TYPE_FUNCTION: //TODO
-        header_child_amount = head->first_child->childAmount;
         print_fancy(head->first_child->first_child);
         printf(" "); //space between type and func_name
         fflush(stdout); 
@@ -146,14 +146,23 @@ void print_fancy (tree_node_t* head) {
         fflush(stdout);
 
         printf(" {\n");
-        //TODO
+        if(head->first_child->brother_next) {
+          
+          print_fancy(head->first_child->brother_next);
+          aux_node = head->first_child->brother_next->first_child;
+          for(i = 1; i < head->first_child->brother_next->childAmount; i++) {
+            aux_node = aux_node->brother_next;
+            print_fancy(aux_node);
+          }
+        }
+
+        //printf("childAmount %d\n", head->last_child->childAmount);
 
         printf("\n}\n");
 
         if(head->last_child && ((valor_lexico_t*)head->last_child->value)->type == AST_TYPE_FUNCTION) {
-          print_fancy(head->last_child);
+            print_fancy(head->last_child);
         }
-
         break;
 
       case AST_TYPE_INT: printf("int"); fflush(stdout); break;       //DONE
@@ -196,10 +205,31 @@ void print_fancy (tree_node_t* head) {
       case AST_TYPE_OUTPUT: printf("AST_TYPE_OUTPUT\n");break;
 
       //commmand
-      case AST_TYPE_RETURN: printf("return ");fflush(stdout);break;                      //TO FINISH (semicolon)
-      case AST_TYPE_BREAK: printf("break;");fflush(stdout);break;                        //DONE
-      case AST_TYPE_CONTINUE: printf("continue;");fflush(stdout);;break;                 //DONE
-      case AST_TYPE_IF_ELSE: printf("AST_TYPE_IF_ELSE\n");break;
+      case AST_TYPE_RETURN: 
+        printf("return ");
+        fflush(stdout);
+        print_fancy(head->first_child);
+        printf(";\n");
+        break;                                                                              //DONE
+      case AST_TYPE_BREAK: printf("break;\n");fflush(stdout);break;                        //DONE
+      case AST_TYPE_CONTINUE: printf("continue;\n");fflush(stdout);;break;                 //DONE
+      case AST_TYPE_IF_ELSE:
+
+        printf("CHILDS: %d\n", head->childAmount);
+        printf("if (");
+        print_fancy(head->first_child);
+        printf(" ) then {\n");
+        print_fancy(head->first_child->brother_next);
+        printf("\n}");
+        if(head->childAmount < 3) {
+          printf(";\n");
+        } else {
+          printf("else {\n");
+          print_fancy(head->first_child->brother_next->brother_next);
+          printf("};");
+        }
+
+        ;break;
       case AST_TYPE_ATTRIBUTION: printf("AST_TYPE_ATTRIBUTION\n");break;
       case AST_TYPE_CASE: printf("AST_TYPE_CASE\n");break;
       case AST_TYPE_DECLR_ON_ATTR: printf("AST_TYPE_DECLR_ON_ATTR\n");break;
@@ -210,35 +240,129 @@ void print_fancy (tree_node_t* head) {
       case AST_TYPE_DO_WHILE: printf("AST_TYPE_DO_WHILE\n");break;
       case AST_TYPE_SWITCH: printf("AST_TYPE_SWITCH\n");break;
 
-      //logic ops
-      case AST_TYPE_LS: printf(" < ");fflush(stdout);break;     //DONE
-      case AST_TYPE_LE: printf(" <= ");fflush(stdout);break;    //DONE
-      case AST_TYPE_GR: printf(" > ");fflush(stdout);break;     //DONE
-      case AST_TYPE_GE: printf(" >= ");fflush(stdout);break;    //DONE
-      case AST_TYPE_EQ: printf(" == ");fflush(stdout);break;    //DONE
-      case AST_TYPE_NE: printf(" != ");fflush(stdout);break;    //DONE
-      case AST_TYPE_AND: printf(" && ");fflush(stdout);break;   //DONE
-      case AST_TYPE_OR: printf(" || ");fflush(stdout);break;    //DONE
-      case AST_TYPE_SL: printf(" << ");fflush(stdout);break;    //DONE
-      case AST_TYPE_SR: printf(" >> ");fflush(stdout);break;    //DONE
-      case AST_TYPE_BW_OR: printf(" | ");fflush(stdout);break;  //DONE
-      case AST_TYPE_BW_AND: printf(" & ");fflush(stdout);break; //DONE
-      case AST_TYPE_BW_XOR: printf(" ^ ");fflush(stdout);break; //DONE
-      case AST_TYPE_NEGATE: printf(" ! ");fflush(stdout);break; //DONE
+      //logic ops //AL
+      case AST_TYPE_LS:
+        print_fancy(head->first_child);
+        printf(" < ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_LE:
+        print_fancy(head->first_child);
+        printf(" <= ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_GR:
+        print_fancy(head->first_child);
+        printf(" > ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_GE:
+        print_fancy(head->first_child);
+        printf(" >= ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_EQ:
+        print_fancy(head->first_child);
+        printf(" == ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_NE:
+        print_fancy(head->first_child);
+        printf(" != ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_AND:
+        print_fancy(head->first_child);
+        printf(" && ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_OR:
+        print_fancy(head->first_child);
+        printf(" || ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_SL:
+        print_fancy(head->first_child);
+        printf(" << ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_SR:
+        print_fancy(head->first_child);
+        printf(" >> ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_BW_OR:
+        print_fancy(head->first_child);
+        printf(" | ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_BW_AND:
+        print_fancy(head->first_child);
+        printf(" & ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_BW_XOR:
+        print_fancy(head->first_child);
+        printf(" ^ ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+
 
       // unary stuff
-      case AST_TYPE_ADDRESS: printf(" &");fflush(stdout);break;        //DONE
-      case AST_TYPE_POINTER: printf(" *");fflush(stdout);break;        //DONE
-      case AST_TYPE_QUESTION_MARK: printf(" ?");fflush(stdout);break;  //DONE
-      case AST_TYPE_HASHTAG: printf(" #");fflush(stdout);break;        //DONE
+      case AST_TYPE_ADDRESS: printf(" &");fflush(stdout);break;
+      case AST_TYPE_POINTER: printf(" *");fflush(stdout);break;
+      case AST_TYPE_QUESTION_MARK: printf(" ?");fflush(stdout);break;
+      case AST_TYPE_HASHTAG: printf(" #");fflush(stdout);break;
+      case AST_TYPE_NEGATIVE:printf(" !");fflush(stdout);break;
+      case AST_TYPE_NEGATE:
+        printf(" - ");
+        fflush(stdout);
+        break;
 
-      //aritmetic ops
-      case AST_TYPE_ADD:printf(" + ");fflush(stdout);break;     //DONE
-      case AST_TYPE_SUB:printf(" - ");fflush(stdout);break;     //DONE
-      case AST_TYPE_MUL:printf(" * ");fflush(stdout);break;     //DONE
-      case AST_TYPE_DIV:printf(" / ");fflush(stdout);break;     //DONE
-      case AST_TYPE_REST:printf(" %% ");fflush(stdout);break;     //DONE
-      case AST_TYPE_NEGATIVE:printf(" !");fflush(stdout);break;     //DONE
+      //aritmetic ops // ALL DONE
+      case AST_TYPE_ADD:
+        print_fancy(head->first_child);
+        printf(" + ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_SUB:
+        print_fancy(head->first_child);
+        printf(" - ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_MUL:
+        print_fancy(head->first_child);
+        printf(" * ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_DIV:
+        print_fancy(head->first_child);
+        printf(" / ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_REST:
+        print_fancy(head->first_child);
+        printf(" % ");
+        print_fancy(head->last_child);
+        fflush(stdout);
+        break;
 
       // pipe and weird stuff
       case AST_TYPE_FOWARD_PIPE: printf("AST_TYPE_FOWARD_PIPE\n");break;

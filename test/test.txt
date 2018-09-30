@@ -1,11 +1,35 @@
 bool function(int a, float b) { 
+    return 3;
+    return 4;
+    return 5;
+    return 13 + 8;
+    continue;
+    break;
+
 
 }
 
 int a() {
+    return 0;
+    if ( true ) then {
+
+        if (false) then { break; } else { break; };
+
+        return 1;
+        return 3;
+        return 3;
+        return 3;
+        return 3;
+
+
+    };
+
+    return 0;
 
 }
 
+
 int b() {
+    return 2;
 
 }
