@@ -21,6 +21,7 @@ typedef struct tree_node {
 tree_node_t* make_tree();
 tree_node_t* make_node(void* value);
 tree_node_t* insert_child(tree_node_t* father, tree_node_t* children);
+tree_node_t* make_ast_node(valor_lexico_t* valor_lexico);
 void print_BFS(tree_node_t* head);
 void print_DFS(tree_node_t* head);
 void clean_tree_DFS(tree_node_t* head);

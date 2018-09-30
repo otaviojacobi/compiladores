@@ -1,1 +1,0 @@
-Line 2: syntax error, unexpected ';', expecting TK_IDENTIFICADOR

@@ -12,6 +12,7 @@ clean:
 	rm -f parser.tab.c
 	rm -f parser.tab.h
 	rm -f sample
+	rm -f parser.output
 	find . -type f -name '*.log' -delete
 
 sample:

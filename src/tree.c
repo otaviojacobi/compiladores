@@ -18,6 +18,11 @@ tree_node_t *make_node(void *value) {
   new_node->brother_next = NULL;
   new_node->brother_prev = NULL;
 
+  return new_node;
+}
+
+tree_node_t *make_ast_node(valor_lexico_t* valor_lexico) {
+  return make_node(valor_lexico);
 }
 
 tree_node_t *insert_child(tree_node_t *father, tree_node_t *children) {

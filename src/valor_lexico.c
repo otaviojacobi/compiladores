@@ -67,12 +67,14 @@ void print_type(token_type_t type) {
 
     //utils
     case AST_TYPE_PROGRAM_START: printf("AST_TYPE_PROGRAM_START\n"); break;
+    case AST_TYPE_FUNCTION: printf("AST_TYPE_FUNCTION\n"); break;
 
     //commmand
     case AST_TYPE_WHILE_DO: printf("AST_TYPE_WHILE_DO\n"); break;
     case AST_TYPE_RETURN: printf("AST_TYPE_RETURN\n"); break;
     case AST_TYPE_IF_ELSE: printf("AST_TYPE_IF_ELSE\n"); break;
     case AST_TYPE_ATTRIBUTION: printf("AST_TYPE_ATTRIBUTION\n"); break;
+    case AST_TYPE_CASE: printf("AST_TYPE_CASE\n"); break;
 
     //logic ops
     case AST_TYPE_LS: printf("AST_TYPE_LS\n"); break;
@@ -91,5 +93,6 @@ void print_type(token_type_t type) {
     case AST_TYPE_SUB: printf("AST_TYPE_SUB\n"); break;
     case AST_TYPE_MUL: printf("AST_TYPE_MUL\n"); break;
     case AST_TYPE_DIV: printf("AST_TYPE_DIV\n"); break;
+    default: "ESQUECEU DE INSERIR BOCA ABERTA\n";
   }
 }

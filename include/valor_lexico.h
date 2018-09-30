@@ -15,12 +15,15 @@ typedef enum {
 
   //utils
   AST_TYPE_PROGRAM_START,
+  AST_TYPE_FUNCTION,
+  AST_TYPE_BLOCK,
 
   //commmand
   AST_TYPE_WHILE_DO,
   AST_TYPE_RETURN,
   AST_TYPE_IF_ELSE,
   AST_TYPE_ATTRIBUTION,
+  AST_TYPE_CASE,
 
   //logic ops
   AST_TYPE_LS,
