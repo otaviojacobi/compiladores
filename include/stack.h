@@ -19,5 +19,6 @@ stack_t *create_stack();
 void stack_push(stack_t *q, void* value);
 stack_node_t *stack_pop(stack_t *q);
 int stack_is_empty(stack_t *q);
+void clean_stack(stack_t *s);
 
 #endif

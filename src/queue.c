@@ -52,3 +52,14 @@ int queue_is_empty(queue_t *q) {
     return 1;
   return 0;
 }
+
+void clean_queue(queue_t *q) {
+  queue_node_t *tmp = q->front;
+  while(tmp != NULL) {
+    tmp = tmp->next;
+    free(q->front);
+    q->front = tmp;
+  }
+
+  free(q);
+}

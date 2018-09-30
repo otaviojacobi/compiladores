@@ -1,4 +1,4 @@
-.PHONY: clean test
+.PHONY: clean test sample
 
 CFLAGS = -lfl -Iinclude -g
 all:
@@ -15,6 +15,6 @@ clean:
 	find . -type f -name '*.log' -delete
 
 sample:
-	gcc tree_sample.c src/utils.c src/tree.c src/queue.c src/stack.c -o sample -Iinclude
+	gcc tree_sample.c src/*.c -o sample -Iinclude
 test:
 	./test.sh

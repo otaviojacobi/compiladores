@@ -19,5 +19,6 @@ queue_t *create_queue();
 void queue_push(queue_t *q, void* value);
 queue_node_t *queue_pop(queue_t *q);
 int queue_is_empty(queue_t *q);
+void clean_queue(queue_t *q);
 
 #endif

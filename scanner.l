@@ -65,12 +65,12 @@ MULTI_LINE_COMMENT_END    \*\/
 "%>%"             return TK_OC_FORWARD_PIPE;
 "%|%"             return TK_OC_BASH_PIPE;
 
-{INT}             { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_INT,    strdup(yytext));return TK_LIT_INT;    }
-{FLOAT}|{SCI_NOT} { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_FLOAT,  strdup(yytext));return TK_LIT_FLOAT;  }
-"false"           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_BOOL,   strdup(yytext));return TK_LIT_FALSE;  }
-"true"            { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_BOOL,   strdup(yytext));return TK_LIT_TRUE;   }
-'.'               { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_CHAR,   strdup(yytext));return TK_LIT_CHAR;   }
-{STR}             { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, LITERAL_STRING, strdup(yytext));return TK_LIT_STRING; }
+{INT}             { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_LITERAL_INT,    strdup(yytext));return TK_LIT_INT;    }
+{FLOAT}|{SCI_NOT} { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_LITERAL_FLOAT,  strdup(yytext));return TK_LIT_FLOAT;  }
+"false"           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_LITERAL_BOOL,   strdup(yytext));return TK_LIT_FALSE;  }
+"true"            { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_LITERAL_BOOL,   strdup(yytext));return TK_LIT_TRUE;   }
+'.'               { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_LITERAL_CHAR,   strdup(yytext));return TK_LIT_CHAR;   }
+{STR}             { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_LITERAL_STRING, strdup(yytext));return TK_LIT_STRING; }
 
 {SINGLE_LINE_COMMENT}       {}
 {MULTI_LINE_COMMENT_START}  { BEGIN(BLOCK_COMMENT); comment_start_line = cur_line; }
@@ -82,7 +82,7 @@ MULTI_LINE_COMMENT_END    \*\/
     [^\*\n]*     {/* stops matching when finds either a \n or a * character */}
 }
 
-{IDENT}           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, IDENTIFICATOR, strdup(yytext));return TK_IDENTIFICADOR; }
+{IDENT}           { yylval.valor_lexico = (valor_lexico_t*)construct_valor_lexico(cur_line, AST_TYPE_IDENTIFICATOR, strdup(yytext));return TK_IDENTIFICADOR; }
 .                 return TOKEN_ERRO;
 
 %%
@@ -101,16 +101,16 @@ valor_lexico_t* construct_valor_lexico(int i, token_type_t type, char* value) {
   vl->type = type;
 
   switch(type) {
-    case LITERAL_INT: vl->value.intValue = atoi(value);
+    case AST_TYPE_LITERAL_INT: vl->value.intValue = atoi(value);
       break;
-    case LITERAL_FLOAT: vl->value.floatValue = atof(value);
+    case AST_TYPE_LITERAL_FLOAT: vl->value.floatValue = atof(value);
       break;
-    case LITERAL_BOOL: vl->value.boolValue = strToBool(value);
+    case AST_TYPE_LITERAL_BOOL: vl->value.boolValue = strToBool(value);
       break;
-    case LITERAL_CHAR: vl->value.charValue = value[1];
+    case AST_TYPE_LITERAL_CHAR: vl->value.charValue = value[1];
       break;
-    case IDENTIFICATOR:
-    case LITERAL_STRING: vl->value.stringValue = value;
+    case AST_TYPE_IDENTIFICATOR:
+    case AST_TYPE_LITERAL_STRING: vl->value.stringValue = value;
       break;
     default: yyerror("Could find the given type.");
   }

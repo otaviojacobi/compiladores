@@ -8,7 +8,18 @@ int strToBool(char *boolean) {
   return -1;
 }
 
+char* boolToStr(int boolean) {
+  char *str = (char*) malloc(sizeof(char)*sizeof("false"));
+
+  if(boolean)
+    strcpy(str, "true");
+  else
+    strcpy(str, "false");
+
+  return str;
+}
+
 void kill(char *message) {
-  printf("%s", message);
+  printf("%s\n", message);
   exit(1);
 }

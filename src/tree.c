@@ -48,13 +48,15 @@ void print_BFS(tree_node_t *head) {
   while(!queue_is_empty(q)) {
     queue_node_t* _node = queue_pop(q);
     tree_node_t* node = _node->value;
-    printf("%d\n", *((int*)node->value));
+    print_valor_lexico((valor_lexico_t*)node->value);
     current_son = node->first_child;
     while(current_son) {
       queue_push(q, current_son);
       current_son = current_son -> brother_next;
     }
+    free(_node);
   }
+  clean_queue(q);
 }
 
 void print_DFS(tree_node_t *head) {
@@ -65,11 +67,32 @@ void print_DFS(tree_node_t *head) {
   while(!stack_is_empty(s)) {
     stack_node_t* _node = stack_pop(s);
     tree_node_t* node = _node->value;
-    printf("%d\n", *((int*)node->value));
+    print_valor_lexico((valor_lexico_t*)node->value);
     current_son = node->last_child;
     while(current_son) {
       stack_push(s, current_son);
       current_son = current_son -> brother_prev;
     }
+    free(_node);
   }
+  clean_stack(s);
+}
+
+void clean_tree_DFS(tree_node_t *head) {
+  stack_t *s = create_stack();
+  tree_node_t *current_son;
+
+  stack_push(s, head);
+  while(!stack_is_empty(s)) {
+    stack_node_t* _node = stack_pop(s);
+    tree_node_t* node = _node->value;
+    current_son = node->last_child;
+    while(current_son) {
+      stack_push(s, current_son);
+      current_son = current_son -> brother_prev;
+    }
+    free(_node);
+    free(node);
+  }
+  clean_stack(s);
 }
