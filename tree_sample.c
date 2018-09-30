@@ -61,9 +61,5 @@ int main() {
     print_DFS(head);
     clean_tree_DFS(head);
 
-    // for(int i = 1; i < 21; i++) {
-    //     free(nodes[i]);
-    // }
-
     return 0;
 }

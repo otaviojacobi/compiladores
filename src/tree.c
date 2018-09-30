@@ -92,6 +92,7 @@ void clean_tree_DFS(tree_node_t *head) {
       current_son = current_son -> brother_prev;
     }
     free(_node);
+    free(node->value);
     free(node);
   }
   clean_stack(s);
