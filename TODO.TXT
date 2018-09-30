@@ -1,0 +1,75 @@
+PROBLEMS:
+
+
+quick questions:
+Originally std_type did not generate "primitive" lexical values for its tokens, only std_type_node did.
+I changed it and it seems to work, was there a reason for this?
+now std_type just redirects to std_type_node
+std_type: std_type_node { $$ = $1; }; 
+//TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
+
+&&
+
+was there some reason for flipping pipe children?
+(you added $3 then $1)
+I flipped back and it seems fine
+
+
+==================================================================
+PRIORITY: VERY HIGH
+
+Valgrind shows leaks, plox halp
+
+obs.:
+tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico) {
+  
+  valor_lexico_t *vl;
+  
+  if(valor_lexico == NULL) {
+     vl = (valor_lexico_t*)malloc(sizeof(valor_lexico_t));
+     vl->type = type;
+  } else {
+    vl = valor_lexico;
+  }
+
+  vl->line = 0;
+  return make_node(vl);
+}
+
+the vl from this function in parser.y is not being freed. I tried to store the value from make_node(vl) on a temp variable, free(vl) and return the value from the temp variable but seems like that is not possible. Is leak comming from somewhere else? I did not use malloc once, btw
+EDIT: checked the tree.c code and function clean_tree_DFS handles this. do not know why valgrind is failing.
+
+----->>>>>>> https://github.com/schnorr/comp/issues/68 -> possible reason?????
+
+==================================================================
+PRIORITY: HIGH
+
+TERNARY OPERATOR:
+
+from
+bool f(int x){
+	x = x > 10 ? true : false;
+}
+it becomes
+bool f(int x) {
+x = x > AST_TYPE_TERNARY;
+}
+
+while the first part should catch x > 10 as a whole
+
+==================================================================
+PRIORITY: HIGH
+
+ADD STATIC AND CONST -> I'll probably do this
+
+==================================================================
+PRIORITY: LOW
+SWITCH-CASE
+
+switch (a) {
+	isso aqui é um bloco de comandos normal?
+	case 1:
+		{
+			aqui tem que um bloco de comandos mesmo?
+		};
+}

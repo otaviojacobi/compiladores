@@ -1,1 +1,5 @@
-Line 2: syntax error, unexpected ';', expecting ':' or ','
+void f() {
+for (a = 1, b = 2 : a < 10 : a = a + 1, b = b * a * pow(b, a) + 1) {
+do_stuff(a);
+};
+}

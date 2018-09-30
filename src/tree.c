@@ -194,15 +194,17 @@ void print_fancy (tree_node_t* head) {
       case AST_TYPE_LITERAL_STRING: printf("%s", value->value.stringValue);fflush(stdout); break;         //DONE
 
       //utils
-      case AST_TYPE_FUNCTION_CALL: 
+      case AST_TYPE_FUNCTION_CALL:
         print_fancy(head->first_child);
         printf("(");
-        aux_node = head->first_child->brother_next;
-        while(aux_node){
-          print_fancy(aux_node);
-          aux_node = aux_node->first_child;
-          if(aux_node)
-            printf(", ");
+        if(head->first_child->brother_next){
+          aux_node = head->first_child->brother_next->first_child;
+          while(aux_node){
+            print_fancy(aux_node);
+            aux_node = aux_node->brother_next;
+            if(aux_node)
+              printf(", ");
+          }
         }
         printf(")");
         break;
@@ -210,17 +212,13 @@ void print_fancy (tree_node_t* head) {
       case AST_TYPE_COMMAND_BLOCK:
         printf(" {\n");
         print_fancy(head->first_child);
-        printf("\n}");
+        printf("}");
         break;
 
       case AST_TYPE_COMMAND:
         for(tree_node_t* itr=head->first_child; itr; itr = itr->brother_next){
           print_fancy(itr);
-          token_type_t type = ((valor_lexico_t*)itr->value)->type;
-          if (type == AST_TYPE_FUNCTION_CALL)
-            printf(";");
-          else if (type == AST_TYPE_COMMAND_BLOCK)
-            printf(";\n");
+          printf(";\n");
         }
         break;
 
@@ -248,12 +246,10 @@ void print_fancy (tree_node_t* head) {
       case AST_TYPE_INPUT: 
         printf("input ");
         print_fancy(head->first_child);
-        printf(";\n");
         break;
       case AST_TYPE_OUTPUT: 
         printf("output ");
         print_fancy(head->first_child);
-        printf(";\n");
         break;
 
       //commmand
@@ -261,10 +257,9 @@ void print_fancy (tree_node_t* head) {
         printf("return ");
         fflush(stdout);
         print_fancy(head->first_child);
-        printf(";");
         break;                                                                              //DONE
-      case AST_TYPE_BREAK: printf("break;\n");fflush(stdout);break;                        //DONE
-      case AST_TYPE_CONTINUE: printf("continue;\n");fflush(stdout);;break;                 //DONE
+      case AST_TYPE_BREAK: printf("break");fflush(stdout);break;                        //DONE
+      case AST_TYPE_CONTINUE: printf("continue");fflush(stdout);;break;                 //DONE
       case AST_TYPE_IF_ELSE:
 
         printf("if (");
@@ -272,20 +267,16 @@ void print_fancy (tree_node_t* head) {
         printf(") then");
         print_fancy(head->first_child->brother_next);
         printf("");
-        if(head->childAmount < 3) {
-          printf(";\n");
-        } else {
+        if(head->childAmount >= 3) {
           printf("else");
           print_fancy(head->first_child->brother_next->brother_next);
-          printf(";\n");
         }
 
-        ;break;
+        break;
       case AST_TYPE_ATTRIBUTION: 
         print_fancy(head->first_child);
         printf(" = ");
         print_fancy(head->first_child->brother_next);
-        printf(";");
         break;
 
       case AST_TYPE_DECLR_ON_ATTR: 
@@ -294,7 +285,6 @@ void print_fancy (tree_node_t* head) {
         print_fancy(head->first_child->brother_next);
         printf(" <= ");
         print_fancy(head->first_child->brother_next->brother_next);
-        printf(";\n");
         break;
 
       case AST_TYPE_FOR_COMMAND:
@@ -307,8 +297,23 @@ void print_fancy (tree_node_t* head) {
         }
         break;
 
-      case AST_TYPE_CASE: printf("AST_TYPE_CASE\n");break;
-      case AST_TYPE_TERNARY: printf("AST_TYPE_TERNARY\n");break;
+      case AST_TYPE_CASE: 
+        printf("case ");
+        print_fancy(head->first_child);
+        printf(":\n");
+        print_fancy(head->first_child->brother_next);
+        break;
+      case AST_TYPE_TERNARY: 
+        // for testing: uncomment the break: you will see what part is the actual ternary expression
+        printf("AST_TYPE_TERNARY");
+        break;
+        print_fancy(head->first_child);
+        printf(" ? ");
+        print_fancy(head->first_child->brother_next);
+        printf(" : ");
+        print_fancy(head->first_child->brother_next->brother_next);
+        break;
+
       case AST_TYPE_FOR: 
         printf("for (");
         print_fancy(head->first_child);
@@ -318,13 +323,38 @@ void print_fancy (tree_node_t* head) {
         print_fancy(head->first_child->brother_next->brother_next);
         printf(")");
         print_fancy(head->first_child->brother_next->brother_next->brother_next);
-        printf(";");
         break;
       
-      case AST_TYPE_FOREACH: printf("AST_TYPE_FOREACH\n");break;
-      case AST_TYPE_WHILE_DO: printf("AST_TYPE_WHILE_DO\n");break;
-      case AST_TYPE_DO_WHILE: printf("AST_TYPE_DO_WHILE\n");break;
-      case AST_TYPE_SWITCH: printf("AST_TYPE_SWITCH\n");break;
+      case AST_TYPE_FOREACH: 
+        printf("foreach (");
+        print_fancy(head->first_child);
+        printf(" : ");
+        print_fancy(head->first_child->brother_next);
+        printf(")");
+        print_fancy(head->first_child->brother_next->brother_next);
+        break;
+
+      case AST_TYPE_WHILE_DO: 
+        printf("while (");
+        print_fancy(head->first_child);
+        printf(") do ");
+        print_fancy(head->first_child->brother_next);
+        break;
+
+      case AST_TYPE_DO_WHILE: 
+        printf("do ");
+        print_fancy(head->first_child);
+        printf("while (");
+        print_fancy(head->first_child->brother_next);
+        printf(")");
+        break;
+
+      case AST_TYPE_SWITCH: 
+        printf("switch (");
+        print_fancy(head->first_child);
+        printf(") ");
+        print_fancy(head->first_child->brother_next);
+        break;
 
       //logic ops //AL
       case AST_TYPE_LS:
@@ -451,9 +481,20 @@ void print_fancy (tree_node_t* head) {
         break;
 
       // pipe and weird stuff
-      case AST_TYPE_FOWARD_PIPE: printf("AST_TYPE_FOWARD_PIPE\n");break;
-      case AST_TYPE_BASH_PIPE: printf("AST_TYPE_BASH_PIPE\n");break;
+      case AST_TYPE_FOWARD_PIPE:
+        print_fancy(head->first_child);
+        printf(" %>% ");
+        print_fancy(head->first_child->brother_next);
+        break;
+      
+      case AST_TYPE_BASH_PIPE: 
+        print_fancy(head->first_child);
+        printf(" %|% ");
+        print_fancy(head->first_child->brother_next);
+        break;
+      
       case AST_TYPE_DOT: printf("."); break;
+      
       default: printf("ESQUECEU DE INSERIR BOCA ABERTA\n");
   }
   return;

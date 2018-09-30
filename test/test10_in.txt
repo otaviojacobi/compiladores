@@ -1,0 +1,21 @@
+int f(int x){
+	switch(x){
+		case 1:
+			{
+				do_stuff();
+				print(x);
+				break;
+			};
+		case 2:
+			{
+				do_other_stuff();
+				print(y);
+				break;
+			};
+		case 3:
+			{
+				continue;
+				break;
+			};
+	};
+}

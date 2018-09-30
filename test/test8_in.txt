@@ -1,0 +1,13 @@
+void f(){
+	foreach(variable : x+1, c$field){
+		how_this_foreach_will_work(it_is_weird);
+	};
+	while (x > 0) do{
+		x = x-1;
+		print(x);
+	};
+	do {
+		x = x+1;
+		print(x);
+	} while(x<10);
+}

@@ -28,7 +28,7 @@ echo -e "\nRunning tests..."
 TESTS_PASSED=0
 VALGRINDS_PASSED=0
 TOTAL_TESTS=0
-for TEST_FILE in test/*_in.txt; do
+for TEST_FILE in $(ls test/*_in.txt | sort -V); do
     # build needed paths
     EXPECTED_FILE=$TEST_FILE
     DIFF_FILE=${TEST_FILE//_in/_diff}

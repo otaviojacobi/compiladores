@@ -132,8 +132,8 @@
 
 //TODO: Should this be max prio ?
 
-
-%right '#' '?'
+%left '?'
+%right '#'
 //TODO: Is case a command ? wtf
 
 %%
@@ -147,7 +147,7 @@ programa_rec:  new_type_decl programa_rec  { $$ = $2; }
              | %empty { $$ = NULL; }
 ;
 
-std_type: std_type_node { $$ = $1; }; // toask: was there a reason for this?
+std_type: std_type_node { $$ = $1; };
 //TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
 
@@ -326,7 +326,8 @@ for_command_list ',' simple_command_for
 }
 | simple_command_for
 {
-  $$ = $1;
+  $$ = MakeNode(AST_TYPE_FOR_COMMAND, NULL); 
+  InsertChild($$, $1);
 }
 ;
 
@@ -424,18 +425,14 @@ TK_IDENTIFICADOR '(' args ')'
 args: 
 args ',' expression  {
   $$ = $1;
-  tree_node_t* aux = $$;
-  while(aux->first_child) aux = aux->first_child;
-  InsertChild(aux, $3);
+  InsertChild($$, $3);
 }
 | args ',' '.'       {
   $$ = $1;
-  tree_node_t* aux = $$;
-  while(aux->first_child) aux = aux->first_child;
-  InsertChild(aux, MakeNode(AST_TYPE_DOT, NULL));
+  InsertChild($$, MakeNode(AST_TYPE_DOT, NULL));
 }
-| '.'                {$$ = MakeNode(AST_TYPE_DOT, NULL);}
-| expression         {$$ = $1;}
+| '.'                { $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL); InsertChild($$, MakeNode(AST_TYPE_DOT, NULL));}
+| expression         { $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL); InsertChild($$, $1); }
 ;
 
 shift_cmd: identificador_accessor TK_OC_SL expression | identificador_accessor TK_OC_SR expression;
@@ -493,28 +490,28 @@ pipe_command:
 pipe_rec TK_OC_FORWARD_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_FOWARD_PIPE, NULL);
-  InsertChild($$, $3);
   InsertChild($$, $1);
+  InsertChild($$, $3);
 }
 | pipe_rec TK_OC_BASH_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_BASH_PIPE, NULL);
-  InsertChild($$, $3);
   InsertChild($$, $1);
+  InsertChild($$, $3);
 };
 
 pipe_rec:  
 pipe_rec TK_OC_FORWARD_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_FOWARD_PIPE, NULL);
-  InsertChild($$, $3);
   InsertChild($$, $1);
+  InsertChild($$, $3);
 }
 | pipe_rec TK_OC_BASH_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_BASH_PIPE, NULL);
-  InsertChild($$, $3);
   InsertChild($$, $1);
+  InsertChild($$, $3);
 }
 | func_call
 {
@@ -581,7 +578,6 @@ tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico) {
   }
 
   vl->line = 0;
-  // toask: freeing vl before
   return make_node(vl);
 }
 
