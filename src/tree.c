@@ -27,6 +27,14 @@ tree_node_t *make_ast_node(valor_lexico_t* valor_lexico) {
 
 tree_node_t *insert_child(tree_node_t *father, tree_node_t *children) {
 
+  if(father == NULL) {
+    kill("You can't insert on NULL.\n");
+  }
+
+  if(children == NULL) {
+    kill("You can't insert NULL. You must treat it yourself first\n");
+  }
+
   tree_node_t *current_son = father->first_child;
 
   if(!current_son) {

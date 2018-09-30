@@ -6,10 +6,11 @@
 
 %{
   #include "tree.h"
-  tree_node_t *ast_head;
+  extern tree_node_t *arvore;
   int yylex(void);
   void yyerror (char const *s);
   tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico);
+  void InsertChild(tree_node_t *father, tree_node_t *children);
 %}
 
 %error-verbose
@@ -67,7 +68,6 @@
 %type <valor_lexico> TK_LIT_STRING
 %type <valor_lexico> TK_IDENTIFICADOR
 %type <valor_lexico> func_head
-
 
 %type <node> programa_rec
 %type <node> func
@@ -132,12 +132,12 @@
 
 %%
 
-programa: programa_rec {ast_head = MakeNode(AST_TYPE_PROGRAM_START, NULL); insert_child(ast_head, $1);}
+programa: programa_rec {arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); InsertChild(arvore, $1);}
 ;
 
 programa_rec:  programa_rec new_type_decl { $$ = $1; }
              | programa_rec global_var_decl { $$ = $1; }
-             | programa_rec func { insert_child($2, $1); $$ = $2; }
+             | programa_rec func { InsertChild($2, $1); $$ = $2; }
              | %empty { $$ = NULL; }
 ;
 
@@ -162,26 +162,26 @@ TK_IDENTIFICADOR
 | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR                      
 {
   $$ = MakeNode(AST_TYPE_OBJECT, NULL);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
 }
 | TK_IDENTIFICADOR '[' expression ']'                        
 {
   $$ = MakeNode(AST_TYPE_VECTOR, NULL);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
-  insert_child($$, $3);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, $3);
 }
 | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR   
 {
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
 
   tree_node_t* vector = MakeNode(AST_TYPE_VECTOR, NULL);
-  insert_child(vector, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
-  insert_child(vector, $3);
+  InsertChild(vector, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild(vector, $3);
 
   $$ = MakeNode(AST_TYPE_OBJECT, NULL);
-  insert_child($$, vector);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $6));
+  InsertChild($$, vector);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $6));
 }
 ;
 
@@ -192,7 +192,7 @@ field: protection std_type TK_IDENTIFICADOR | std_type TK_IDENTIFICADOR;
 global_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';';
 gv_type: TK_PR_STATIC std_type | std_type | TK_PR_STATIC TK_IDENTIFICADOR | TK_IDENTIFICADOR;
 
-func: func_head command_block { $$ = MakeNode(AST_TYPE_FUNCTION, $1); insert_child($$, $2); };
+func: func_head command_block { $$ = MakeNode(AST_TYPE_FUNCTION, $1); InsertChild($$, $2); };
 
 func_head:  std_type TK_IDENTIFICADOR param_list
 {
@@ -204,13 +204,12 @@ func_head:  std_type TK_IDENTIFICADOR param_list
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 {
-  $$ = $2; 
+  $$ = $2;
 }
 | TK_PR_STATIC TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 {
   $$ = $3;
-}
-;
+};
 
 param_list: '(' parameters ')' | '(' ')';
 parameters: parameters ',' param | param;
@@ -224,8 +223,8 @@ command_block: '{' command_seq '}' { $$ = $2; }| '{' '}' { $$ = NULL; };
 
 command_seq: command_seq simple_command
 {
-  if($2) {
-    insert_child($2, $1); 
+  if($2 != NULL) {
+    InsertChild($2, $1); 
     $$ = $2;
   } else {
     $$ = $1;
@@ -240,8 +239,8 @@ command_seq: command_seq simple_command
 for_command_list: 
 for_command_list ',' simple_command_for 
 {
-  if($3) {
-    insert_child($3, $1);
+  if($3 != NULL) {
+    InsertChild($3, $1);
     $$ = $3;
   } else {
     $$ = $1;
@@ -273,20 +272,20 @@ simple_command:   command_block ';'       { $$ = $1; }
                 | for ';'                 { $$ = $1; }
 ;
 
-simple_command_for:  command_block ';'       { $$ = $1; }
-                   | local_var_decl ';'      { $$ = $1; }
-                   | attribution ';'         { $$ = $1; }
-                   | input ';'               { $$ = $1; }
-                   | shift_cmd ';'           { $$ = $1; }
-                   | return ';'              { $$ = $1; }
-                   | break ';'               { $$ = $1; }
-                   | continue ';'            { $$ = $1; }
-                   | conditional_command ';' { $$ = $1; }
-                   | foreach ';'             { $$ = $1; }
-                   | while_do ';'            { $$ = $1; }
-                   | do_while ';'            { $$ = $1; }
-                   | pipe_command ';'        { $$ = $1; }
-                   | case ';'                { $$ = $1; }
+simple_command_for:  command_block       { $$ = $1; }
+                   | local_var_decl      { $$ = $1; }
+                   | attribution         { $$ = $1; }
+                   | input               { $$ = $1; }
+                   | shift_cmd           { $$ = $1; }
+                   | return              { $$ = $1; }
+                   | break               { $$ = $1; }
+                   | continue            { $$ = $1; }
+                   | conditional_command { $$ = $1; }
+                   | foreach             { $$ = $1; }
+                   | while_do            { $$ = $1; }
+                   | do_while            { $$ = $1; }
+                   | pipe_command        { $$ = $1; }
+                   | case                { $$ = $1; }
 ;
 
 break: TK_PR_BREAK        { $$ = MakeNode(AST_TYPE_BREAK, NULL); };
@@ -295,8 +294,8 @@ continue: TK_PR_CONTINUE  { $$ = MakeNode(AST_TYPE_CONTINUE, NULL); };
 case: TK_PR_CASE TK_LIT_INT ':' command_block 
 {
   $$ = MakeNode(AST_TYPE_CASE, NULL);
-  insert_child($$, MakeNode(AST_TYPE_LITERAL_INT, $2));
-  insert_child($$, $4);
+  InsertChild($$, MakeNode(AST_TYPE_LITERAL_INT, $2));
+  InsertChild($$, $4);
 };
 
 local_var_decl: TK_PR_STATIC local_var_static_consumed { $$ = $2; }| local_var_static_consumed { $$ = $1; };
@@ -307,125 +306,125 @@ std_type TK_IDENTIFICADOR { $$ = NULL; }
 | std_type TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR
 {
   $$ = MakeNode(AST_TYPE_DECLR_ON_ATTR, NULL);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $4));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $4));
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE tk_lit
 {
   $$ = MakeNode(AST_TYPE_DECLR_ON_ATTR, NULL);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
-  insert_child($$, $4);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, $4);
 }
 ;
 
 attribution: identificador_accessor '=' expression
 {
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
-  insert_child($$, $1);
-  insert_child($$, $3);
+  InsertChild($$, $1);
+  InsertChild($$, $3);
 }
 ;
 
-input: TK_PR_INPUT expression         {$$ = MakeNode(AST_TYPE_INPUT, NULL); insert_child($$, $2);};
-output: TK_PR_OUTPUT expression_list  {$$ = MakeNode(AST_TYPE_OUTPUT, NULL); insert_child($$, $2);};
+input: TK_PR_INPUT expression         {$$ = MakeNode(AST_TYPE_INPUT, NULL); InsertChild($$, $2);};
+output: TK_PR_OUTPUT expression_list  {$$ = MakeNode(AST_TYPE_OUTPUT, NULL); InsertChild($$, $2);};
 
 func_call: 
 TK_IDENTIFICADOR '(' args ')'
 {
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
-  insert_child($$, $3);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, $3);
 }
 | TK_IDENTIFICADOR '(' ')'
 {
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
-  insert_child($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
 };
 
 args: 
-args ',' expression  {$$ = $3;insert_child($$, $1);}
-| args ',' '.'       {$$ = MakeNode(AST_TYPE_DOT, NULL);insert_child($$, $1);}
+args ',' expression  {$$ = $3;InsertChild($$, $1);}
+| args ',' '.'       {$$ = MakeNode(AST_TYPE_DOT, NULL);InsertChild($$, $1);}
 | '.'                {$$ = MakeNode(AST_TYPE_DOT, NULL);}
 | expression         {$$ = $1;}
 ;
 
 shift_cmd: identificador_accessor TK_OC_SL expression | identificador_accessor TK_OC_SR expression;
 
-return: TK_PR_RETURN expression {$$ = MakeNode(AST_TYPE_RETURN, NULL); insert_child($$, $2);};
+return: TK_PR_RETURN expression {$$ = MakeNode(AST_TYPE_RETURN, NULL); InsertChild($$, $2);};
 
 conditional_command: 
 TK_PR_IF '(' expression ')' TK_PR_THEN command_block
 {
   $$ = MakeNode(AST_TYPE_IF_ELSE, NULL);
-  insert_child($$, $3);
-  insert_child($$, $6);
+  InsertChild($$, $3);
+  InsertChild($$, $6);
 }
 | TK_PR_IF '(' expression ')' TK_PR_THEN command_block TK_PR_ELSE command_block
 {
   $$ = MakeNode(AST_TYPE_IF_ELSE, NULL);
-  insert_child($$, $3);
-  insert_child($$, $6);
-  insert_child($$, $8);
+  InsertChild($$, $3);
+  InsertChild($$, $6);
+  InsertChild($$, $8);
 }
 ;
 
 foreach:  TK_PR_FOREACH '(' identificador_accessor ':' expression_list ')' command_block
 {
   $$ = MakeNode(AST_TYPE_FOREACH, NULL);
-  insert_child($$, $3);
-  insert_child($$, $5);
-  insert_child($$, $7);
+  InsertChild($$, $3);
+  InsertChild($$, $5);
+  InsertChild($$, $7);
 };
 
 for: TK_PR_FOR '(' for_command_list ':' expression ':' for_command_list ')' command_block
 {
   $$ = MakeNode(AST_TYPE_FOR, NULL);
-  insert_child($$, $3);
-  insert_child($$, $5);
-  insert_child($$, $7);
-  insert_child($$, $9);
+  InsertChild($$, $3);
+  InsertChild($$, $5);
+  InsertChild($$, $7);
+  InsertChild($$, $9);
 };
 
 while_do: TK_PR_WHILE '(' expression ')' TK_PR_DO command_block
 {
   $$ = MakeNode(AST_TYPE_WHILE_DO, NULL);
-  insert_child($$, $3);
-  insert_child($$, $6);
+  InsertChild($$, $3);
+  InsertChild($$, $6);
 };
 
 do_while: TK_PR_DO  command_block TK_PR_WHILE '(' expression ')'
 {
   $$ = MakeNode(AST_TYPE_DO_WHILE, NULL);
-  insert_child($$, $2);
-  insert_child($$, $5);
+  InsertChild($$, $2);
+  InsertChild($$, $5);
 };
 
 pipe_command:  
 pipe_rec TK_OC_FORWARD_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_FOWARD_PIPE, NULL);
-  insert_child($$, $3);
-  insert_child($$, $1);
+  InsertChild($$, $3);
+  InsertChild($$, $1);
 }
 | pipe_rec TK_OC_BASH_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_BASH_PIPE, NULL);
-  insert_child($$, $3);
-  insert_child($$, $1);
+  InsertChild($$, $3);
+  InsertChild($$, $1);
 };
 
 pipe_rec:  
 pipe_rec TK_OC_FORWARD_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_FOWARD_PIPE, NULL);
-  insert_child($$, $3);
-  insert_child($$, $1);
+  InsertChild($$, $3);
+  InsertChild($$, $1);
 }
 | pipe_rec TK_OC_BASH_PIPE func_call
 {
   $$ = MakeNode(AST_TYPE_BASH_PIPE, NULL);
-  insert_child($$, $3);
-  insert_child($$, $1);
+  InsertChild($$, $3);
+  InsertChild($$, $1);
 }
 | func_call
 {
@@ -435,41 +434,41 @@ pipe_rec TK_OC_FORWARD_PIPE func_call
 switch: TK_PR_SWITCH '(' expression ')' command_block
 {
   $$ = MakeNode(AST_TYPE_SWITCH, NULL);
-  insert_child($$, $3);
-  insert_child($$, $5);
+  InsertChild($$, $3);
+  InsertChild($$, $5);
 };
 
 expression_list: 
-expression_list ',' expression { $$ = $3;insert_child($$, $1); }
+expression_list ',' expression { $$ = $3;InsertChild($$, $1); }
 | expression                   { $$ = $1; }
 ;
 expression:  
 '(' expression ')'        { $$ = $2; }
 | identificador_accessor  { $$ = $1; }
 | '+' expression          { $$ = $2; }
-| '-' expression          { $$ = MakeNode(AST_TYPE_NEGATIVE, NULL); insert_child($$, $2);}
-| '!' expression          { $$ = MakeNode(AST_TYPE_NEGATE, NULL); insert_child($$, $2);}
-| '&' expression          { $$ = MakeNode(AST_TYPE_ADDRESS, NULL); insert_child($$, $2);}
-| '*' expression          { $$ = MakeNode(AST_TYPE_POINTER, NULL); insert_child($$, $2);}
-| '?' expression          { $$ = MakeNode(AST_TYPE_QUESTION_MARK, NULL); insert_child($$, $2);}
-| '#' expression          { $$ = MakeNode(AST_TYPE_HASHTAG, NULL); insert_child($$, $2);}
-| expression '*' expression                 {$$ = MakeNode(AST_TYPE_MUL, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '/' expression                 {$$ = MakeNode(AST_TYPE_DIV, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '%' expression                 {$$ = MakeNode(AST_TYPE_REST, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '+' expression                 {$$ = MakeNode(AST_TYPE_ADD, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '-' expression                 {$$ = MakeNode(AST_TYPE_SUB, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '<' expression                 {$$ = MakeNode(AST_TYPE_LS, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '|' expression                 {$$ = MakeNode(AST_TYPE_BW_OR, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '&' expression                 {$$ = MakeNode(AST_TYPE_BW_AND, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '^' expression                 {$$ = MakeNode(AST_TYPE_BW_XOR, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression TK_OC_LE expression            {$$ = MakeNode(AST_TYPE_LE, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '>' expression                 {$$ = MakeNode(AST_TYPE_GR, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression TK_OC_GE expression            {$$ = MakeNode(AST_TYPE_GE, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression TK_OC_EQ expression            {$$ = MakeNode(AST_TYPE_EQ, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression TK_OC_NE expression            {$$ = MakeNode(AST_TYPE_NE, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression TK_OC_AND expression           {$$ = MakeNode(AST_TYPE_AND, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression TK_OC_OR expression            {$$ = MakeNode(AST_TYPE_OR, NULL);insert_child($$, $1);insert_child($$, $3);}
-| expression '?' expression ':' expression  {$$ = MakeNode(AST_TYPE_TERNARY, NULL);insert_child($$, $1);insert_child($$, $3);insert_child($$, $5);}
+| '-' expression          { $$ = MakeNode(AST_TYPE_NEGATIVE, NULL); InsertChild($$, $2);}
+| '!' expression          { $$ = MakeNode(AST_TYPE_NEGATE, NULL); InsertChild($$, $2);}
+| '&' expression          { $$ = MakeNode(AST_TYPE_ADDRESS, NULL); InsertChild($$, $2);}
+| '*' expression          { $$ = MakeNode(AST_TYPE_POINTER, NULL); InsertChild($$, $2);}
+| '?' expression          { $$ = MakeNode(AST_TYPE_QUESTION_MARK, NULL); InsertChild($$, $2);}
+| '#' expression          { $$ = MakeNode(AST_TYPE_HASHTAG, NULL); InsertChild($$, $2);}
+| expression '*' expression                 {$$ = MakeNode(AST_TYPE_MUL, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '/' expression                 {$$ = MakeNode(AST_TYPE_DIV, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '%' expression                 {$$ = MakeNode(AST_TYPE_REST, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '+' expression                 {$$ = MakeNode(AST_TYPE_ADD, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '-' expression                 {$$ = MakeNode(AST_TYPE_SUB, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '<' expression                 {$$ = MakeNode(AST_TYPE_LS, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '|' expression                 {$$ = MakeNode(AST_TYPE_BW_OR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '&' expression                 {$$ = MakeNode(AST_TYPE_BW_AND, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '^' expression                 {$$ = MakeNode(AST_TYPE_BW_XOR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression TK_OC_LE expression            {$$ = MakeNode(AST_TYPE_LE, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '>' expression                 {$$ = MakeNode(AST_TYPE_GR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression TK_OC_GE expression            {$$ = MakeNode(AST_TYPE_GE, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression TK_OC_EQ expression            {$$ = MakeNode(AST_TYPE_EQ, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression TK_OC_NE expression            {$$ = MakeNode(AST_TYPE_NE, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression TK_OC_AND expression           {$$ = MakeNode(AST_TYPE_AND, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression TK_OC_OR expression            {$$ = MakeNode(AST_TYPE_OR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+| expression '?' expression ':' expression  {$$ = MakeNode(AST_TYPE_TERNARY, NULL);InsertChild($$, $1);InsertChild($$, $3);InsertChild($$, $5);}
 | pipe_command                              {$$ = $1;}
 | func_call                                 {$$ = $1;}
 | tk_lit                                    {$$ = $1;}
@@ -478,7 +477,24 @@ expression:
 %%
 
 tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico) {
-  valor_lexico->type = type;
-  valor_lexico->line = 0;
-  return make_node(valor_lexico);
+  
+  valor_lexico_t *vl;
+  
+  if(valor_lexico == NULL) {
+     vl = (valor_lexico_t*)malloc(sizeof(valor_lexico_t));
+     vl->type = type;
+  } else {
+    vl = valor_lexico;
+  }
+
+  vl->line = 0;
+
+  return make_node(vl);
+}
+
+void InsertChild(tree_node_t *father, tree_node_t *children) {
+  if(children == NULL)
+    return;
+
+  insert_child(father, children);
 }
