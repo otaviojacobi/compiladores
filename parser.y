@@ -265,13 +265,29 @@ global_var_decl: TK_IDENTIFICADOR gv_type ';' {
   InsertChild($$, $5);
 };
 
-gv_type: TK_PR_STATIC std_type { $$ = $2; }
+gv_type: TK_PR_STATIC std_type { 
+  $$ = MakeNode(AST_TYPE_STATIC, NULL); 
+  InsertChild($$, $2); 
+}
 | std_type { $$ = $1; }
-| TK_PR_STATIC TK_IDENTIFICADOR { $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $2); }
+| TK_PR_STATIC TK_IDENTIFICADOR { 
+  $$ = MakeNode(AST_TYPE_STATIC, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2)); }
 | TK_IDENTIFICADOR { $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1); }
 ;
 
-func: func_head command_block { $$ = MakeNode(AST_TYPE_FUNCTION, NULL); InsertChild($$, $1); InsertChild($$, $2); };
+func: func_head command_block { 
+  $$ = MakeNode(AST_TYPE_FUNCTION, NULL); 
+  InsertChild($$, $1); 
+  InsertChild($$, $2); 
+}
+| TK_PR_STATIC func_head command_block {
+  $$ = MakeNode(AST_TYPE_STATIC, NULL);
+  tree_node_t* aux = MakeNode(AST_TYPE_FUNCTION, NULL); 
+  InsertChild(aux, $2); 
+  InsertChild(aux, $3);
+  InsertChild($$, aux);
+};
 
 func_head:  std_type_node TK_IDENTIFICADOR param_list
 {
@@ -280,26 +296,12 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $3);
 }
-| TK_PR_STATIC std_type_node TK_IDENTIFICADOR param_list
-{
-  $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
-  InsertChild($$, $2);
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
-  InsertChild($$, $4);
-}
 | TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 {
   $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $3);
-}
-| TK_PR_STATIC TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
-{
-  $$ = MakeNode(AST_TYPE_FUNCTION_HEAD, NULL);
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
-  InsertChild($$, $4);
 };
 
 param_list: '(' parameters ')' { $$ = $2;
@@ -312,19 +314,15 @@ param_list: '(' parameters ')' { $$ = $2;
 parameters: 
 parameters ',' param {
   if($1 != NULL) {
-    tree_node_t* aux = $1;
-    while(aux->first_child->brother_next->brother_next) aux = aux->first_child->brother_next->brother_next;
-    InsertChild(aux, $3); 
+    InsertChild($1, $3);
     $$ = $1;
-    //tree_node_t* head1 = aux->first_child->brother_next;
-    //tree_node_t* head2 = $3->first_child->brother_next;
-    //printf("value=%s added as child of %s\n", ((valor_lexico_t*)head2->value)->value.stringValue, ((valor_lexico_t*)head1->value)->value.stringValue);
   } else {
     $$ = $3;
   }
 }
 | param {
-  $$ = $1;
+  $$ = MakeNode(AST_TYPE_PARAM_LIST, NULL);
+  InsertChild($$, $1);
 };
 
 param:  
@@ -335,9 +333,11 @@ std_type_node TK_IDENTIFICADOR {
 }
 
 | TK_PR_CONST std_type_node TK_IDENTIFICADOR {
-  $$ = MakeNode(AST_TYPE_PARAM, NULL);
-  InsertChild($$, $2);
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  tree_node_t* aux = MakeNode(AST_TYPE_PARAM, NULL);
+  InsertChild(aux, $2);
+  InsertChild(aux, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  $$ = MakeNode(AST_TYPE_CONST, NULL);
+  InsertChild($$, aux);
 }
 
 | TK_IDENTIFICADOR TK_IDENTIFICADOR {
@@ -347,9 +347,11 @@ std_type_node TK_IDENTIFICADOR {
 }
 
 | TK_PR_CONST TK_IDENTIFICADOR TK_IDENTIFICADOR {
-  $$ = MakeNode(AST_TYPE_PARAM, NULL);
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  tree_node_t* aux = MakeNode(AST_TYPE_PARAM, NULL);
+  InsertChild(aux, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild(aux, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+  $$ = MakeNode(AST_TYPE_CONST, NULL);
+  InsertChild($$, aux);
 };
 
 command_block: '{' command_seq '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); InsertChild($$, $2); } | '{' '}' { $$ = NULL; };
@@ -432,8 +434,17 @@ case: TK_PR_CASE TK_LIT_INT ':' command_block
   InsertChild($$, $4);
 };
 
-local_var_decl: TK_PR_STATIC local_var_static_consumed { $$ = $2; }| local_var_static_consumed { $$ = $1; };
-local_var_static_consumed: TK_PR_CONST local_var_const_consumed { $$ = $2; } | local_var_const_consumed { $$ = $1; };
+local_var_decl: TK_PR_STATIC local_var_static_consumed { 
+  $$ = MakeNode(AST_TYPE_STATIC, NULL); 
+  InsertChild($$, $2); 
+}
+| local_var_static_consumed { $$ = $1; };
+local_var_static_consumed: TK_PR_CONST local_var_const_consumed { 
+  $$ = MakeNode(AST_TYPE_CONST, NULL);
+  InsertChild($$, $2);
+} 
+| local_var_const_consumed { $$ = $1; };
+
 local_var_const_consumed:  
 std_type TK_IDENTIFICADOR { 
   $$ = MakeNode(AST_TYPE_DECLR, NULL); 

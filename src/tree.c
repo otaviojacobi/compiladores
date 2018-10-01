@@ -129,6 +129,29 @@ void print_fancy (tree_node_t* head) {
         print_fancy(head);
         break;
 
+      case AST_TYPE_STATIC:
+        printf("static ");
+        print_fancy(head->first_child);
+        aux_node = head->first_child->brother_next;
+        while(aux_node){
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+        }
+        break;
+
+      case AST_TYPE_CONST:
+        printf("const ");
+        print_fancy(head->first_child);
+        if(head && head->first_child){
+          aux_node = head->first_child->brother_next;
+          while(aux_node){
+            print_fancy(aux_node);
+            aux_node = aux_node->brother_next;
+          }  
+        }
+        
+        break;
+
       case AST_TYPE_GLOBAL_VAR:
         aux_node = head->first_child;
         if(((valor_lexico_t*)aux_node->brother_next->value)->type == AST_TYPE_LITERAL_INT){
@@ -239,12 +262,6 @@ void print_fancy (tree_node_t* head) {
         printf(" ");
         fflush(stdout);
         print_fancy(head->first_child->brother_next);
-
-        if(head->first_child->brother_next->brother_next) {
-          printf(", ");
-          fflush(stdout);
-          print_fancy(head->first_child->brother_next->brother_next);
-        }
         break;
 
       case AST_TYPE_IDENTIFICATOR: printf("%s", value->value.stringValue); fflush(stdout); break;          //DONE
@@ -354,7 +371,17 @@ void print_fancy (tree_node_t* head) {
         }
         break;
 
-      case AST_TYPE_FOR_COMMAND:
+      case AST_TYPE_PARAM_LIST: // unite with AST_TYPE_FOR_COMMAND?
+        aux_node = head->first_child;
+        while(aux_node){
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+          if(aux_node)
+            printf(", ");
+        }
+        break;
+
+      case AST_TYPE_FOR_COMMAND: // unite with AST_TYPE_PARAM_LIST
         aux_node = head->first_child;
         while(aux_node){
           print_fancy(aux_node);

@@ -3,7 +3,8 @@
 PROGRAM='etapa3'
 
 RED='\033[0;31m'
-GREEN='\033[0;32m' 
+GREEN='\033[0;32m'
+YELLOW='\[\033[0;33m\]'
 NO_COLOR='\033[0m'
 
 clear
@@ -32,6 +33,7 @@ for TEST_FILE in $(ls test/*_in.txt | sort -V); do
     # build needed paths
     EXPECTED_FILE=$TEST_FILE
     DIFF_FILE=${TEST_FILE//_in/_diff}
+    WARNING_DIFF_FILE=${TEST_FILE//_in/_warning_diff}
     OUT_FILE=${TEST_FILE//_in/_out}
     OUT_FILE2=${TEST_FILE//_in/_out2}
     VALGRIND_FILE=${TEST_FILE//_in/_valgrind}
@@ -41,6 +43,7 @@ for TEST_FILE in $(ls test/*_in.txt | sort -V); do
     $(./$PROGRAM < $OUT_FILE > $OUT_FILE2 2>&1)
     # $(echo RETURN CODE: $? >> $OUT_FILE)
     $(diff -wBEs $OUT_FILE $OUT_FILE2 > $DIFF_FILE)
+    $(diff -wBEs $OUT_FILE $TEST_FILE > $WARNING_DIFF_FILE)
     $(valgrind --leak-check=full ./$PROGRAM < $TEST_FILE > $VALGRIND_FILE 2>&1)
 
     # inform test results
@@ -55,6 +58,13 @@ for TEST_FILE in $(ls test/*_in.txt | sort -V); do
         echo -ne $NO_COLOR
         echo "Diff:"
         cat $DIFF_FILE
+    fi
+
+    # inform test results
+    if [ "$(grep -c "are identical" $WARNING_DIFF_FILE)" -eq 0 ]; then
+        echo -ne $YELLOW
+        echo "WARNING, program output from "\"$TEST_FILE\"" differs from original file"
+        echo -ne $NO_COLOR
     fi
 
     # inform Valgrind test results
