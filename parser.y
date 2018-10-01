@@ -354,7 +354,7 @@ std_type_node TK_IDENTIFICADOR {
   InsertChild($$, aux);
 };
 
-command_block: '{' command_seq '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); InsertChild($$, $2); } | '{' '}' { $$ = NULL; };
+command_block: '{' command_seq '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); InsertChild($$, $2); } | '{' '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); };
 
 command_seq: command_seq simple_command
 {
@@ -509,7 +509,19 @@ args ',' expression  {
 | expression         { $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL); InsertChild($$, $1); }
 ;
 
-shift_cmd: identificador_accessor TK_OC_SL expression | identificador_accessor TK_OC_SR expression;
+shift_cmd: 
+identificador_accessor TK_OC_SL expression
+{
+  $$ = MakeNode(AST_TYPE_SL, NULL);
+  InsertChild($$, $1);
+  InsertChild($$, $3);
+}
+| identificador_accessor TK_OC_SR expression
+{
+  $$ = MakeNode(AST_TYPE_SR, NULL);
+  InsertChild($$, $1);
+  InsertChild($$, $3);
+};
 
 return: TK_PR_RETURN expression {$$ = MakeNode(AST_TYPE_RETURN, NULL); InsertChild($$, $2);};
 

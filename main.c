@@ -8,15 +8,13 @@ Este arquivo não pode ser modificado.
 #include "tree.h"
 
 void *arvore = NULL;
-//void descompila (void *arvore);
-//void libera (void *arvore);
 
 int main (int argc, char **argv)
 {
   int ret = yyparse();
-  // print_DFS(arvore);
   descompila (arvore);
   libera(arvore);
+
   arvore = NULL;
   return ret;
 }

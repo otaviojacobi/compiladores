@@ -300,7 +300,8 @@ void print_fancy (tree_node_t* head) {
 
       case AST_TYPE_COMMAND_BLOCK:
         printf(" {\n");
-        print_fancy(head->first_child);
+        if(head->first_child != NULL)
+          print_fancy(head->first_child);
         printf("}");
         break;
 
@@ -353,7 +354,9 @@ void print_fancy (tree_node_t* head) {
 
         printf("if (");
         print_fancy(head->first_child);
+        fflush(stdout);        
         printf(") then");
+        fflush(stdout);
         print_fancy(head->first_child->brother_next);
         printf("");
         if(head->childAmount >= 3) {
@@ -601,7 +604,7 @@ void print_fancy (tree_node_t* head) {
         break;
       case AST_TYPE_REST:
         print_fancy(head->first_child);
-        printf(" % ");
+        printf(" %% ");
         print_fancy(head->last_child);
         fflush(stdout);
         break;
