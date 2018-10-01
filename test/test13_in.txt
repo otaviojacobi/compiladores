@@ -1,0 +1,4 @@
+class BUFF_MY_CLASS [
+	int field1 : public int field2 :
+	protected char field3 : private string field4
+];

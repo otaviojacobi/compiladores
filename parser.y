@@ -108,6 +108,11 @@
 %type <node> pipe_rec
 %type <node> expression_list
 %type <node> for_command_list
+%type <node> new_type_decl
+%type <node> field_list
+%type <node> field
+%type <node> protection
+
 
 
 %union {
@@ -132,8 +137,7 @@
 
 //TODO: Should this be max prio ?
 
-%left '?'
-%right '#'
+%right '#' '?'
 //TODO: Is case a command ? wtf
 
 %%
@@ -149,7 +153,16 @@ programa_rec:  new_type_decl programa_rec  { $$ = $2; }
 
 std_type: std_type_node { $$ = $1; };
 //TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
-protection: TK_PR_PRIVATE | TK_PR_PUBLIC | TK_PR_PROTECTED;
+
+protection: TK_PR_PRIVATE { 
+  $$ = MakeNode(AST_TYPE_PROTECTION_PRIVATE, NULL); 
+}
+| TK_PR_PUBLIC { 
+  $$ = MakeNode(AST_TYPE_PROTECTION_PUBLIC, NULL); 
+}
+| TK_PR_PROTECTED { 
+  $$ = MakeNode(AST_TYPE_PROTECTION_PROTECTED, NULL); 
+};
 
 std_type_node: 
 TK_PR_INT {
@@ -209,9 +222,35 @@ TK_IDENTIFICADOR
 }
 ;
 
-new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';';
-field_list: field_list ':' field | field;
-field: protection std_type TK_IDENTIFICADOR | std_type TK_IDENTIFICADOR;
+new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
+  $$ = MakeNode(AST_TYPE_CLASS, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+  InsertChild($$, $4);
+};
+field_list: field_list ':' field 
+{
+  $$ = $1;
+  InsertChild($$, $3);
+}
+| field
+{
+  $$ = MakeNode(AST_TYPE_CLASS_FIELD_LIST, NULL);
+  InsertChild($$, $1);
+}
+;
+field: protection std_type TK_IDENTIFICADOR 
+{ 
+  $$ = MakeNode(AST_TYPE_CLASS_FIELD, NULL);
+  InsertChild($$, $1);                        
+  InsertChild($$, $2);                        
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));                       
+}
+| std_type TK_IDENTIFICADOR 
+{ 
+  $$ = MakeNode(AST_TYPE_CLASS_FIELD, NULL);
+  InsertChild($$, $1);                        
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));                       
+};
 
 global_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';';
 gv_type: TK_PR_STATIC std_type | std_type | TK_PR_STATIC TK_IDENTIFICADOR | TK_IDENTIFICADOR;

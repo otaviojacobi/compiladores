@@ -129,6 +129,20 @@ void print_fancy (tree_node_t* head) {
         print_fancy(head);
         break;
 
+      case AST_TYPE_CLASS:
+        printf("class ");
+        print_fancy(head->first_child);
+        printf(" [");
+        print_fancy(head->first_child->brother_next);
+        printf("];");
+        break;
+      case AST_TYPE_CLASS_FIELD_LIST:
+        printf("AST_TYPE_CLASS_FIELD_LIST");
+        break;
+      case AST_TYPE_CLASS_FIELD:
+        printf("AST_TYPE_CLASS_FIELD");
+        break;
+
       case AST_TYPE_FUNCTION: //TODO
         print_fancy(head->first_child->first_child);
         printf(" "); //space between type and func_name
