@@ -90,7 +90,7 @@ void print_type(token_type_t type) {
     case AST_TYPE_IF_ELSE: printf("AST_TYPE_IF_ELSE\n");break;
     case AST_TYPE_ATTRIBUTION: printf("AST_TYPE_ATTRIBUTION\n");break;
     case AST_TYPE_CASE: printf("AST_TYPE_CASE\n");break;
-    case AST_TYPE_DECLR_ON_ATTR: printf("AST_TYPE_DECLR_ON_ATTR\n");break;
+    case AST_TYPE_DECLR: printf("AST_TYPE_DECLR\n");break;
     case AST_TYPE_TERNARY: printf("AST_TYPE_TERNARY\n");break;
     case AST_TYPE_FOR: printf("AST_TYPE_FOR\n");break;
     case AST_TYPE_FOREACH: printf("AST_TYPE_FOREACH\n");break;

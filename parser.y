@@ -112,7 +112,8 @@
 %type <node> field_list
 %type <node> field
 %type <node> protection
-
+%type <node> global_var_decl
+%type <node> gv_type
 
 
 %union {
@@ -145,8 +146,8 @@
 programa: programa_rec {arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); InsertChild(arvore, $1);}
 ;
 
-programa_rec:  new_type_decl programa_rec  { $$ = $2; }
-             | global_var_decl programa_rec  { $$ = $2; }
+programa_rec:  new_type_decl programa_rec  { InsertChild($1, $2); $$ = $1; }
+             | global_var_decl programa_rec  {  InsertChild($1, $2); $$ = $1; }
              | func programa_rec { InsertChild($1, $2); $$ = $1; }
              | %empty { $$ = NULL; }
 ;
@@ -155,13 +156,13 @@ std_type: std_type_node { $$ = $1; };
 //TK_PR_INT | TK_PR_FLOAT | TK_PR_BOOL | TK_PR_CHAR | TK_PR_STRING;
 
 protection: TK_PR_PRIVATE { 
-  $$ = MakeNode(AST_TYPE_PROTECTION_PRIVATE, NULL); 
+  $$ = MakeNode(AST_TYPE_PROTECTION_PRIVATE, NULL);
 }
 | TK_PR_PUBLIC { 
-  $$ = MakeNode(AST_TYPE_PROTECTION_PUBLIC, NULL); 
+  $$ = MakeNode(AST_TYPE_PROTECTION_PUBLIC, NULL);
 }
 | TK_PR_PROTECTED { 
-  $$ = MakeNode(AST_TYPE_PROTECTION_PROTECTED, NULL); 
+  $$ = MakeNode(AST_TYPE_PROTECTION_PROTECTED, NULL);
 };
 
 std_type_node: 
@@ -252,8 +253,23 @@ field: protection std_type TK_IDENTIFICADOR
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));                       
 };
 
-global_var_decl: TK_IDENTIFICADOR gv_type ';' | TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';';
-gv_type: TK_PR_STATIC std_type | std_type | TK_PR_STATIC TK_IDENTIFICADOR | TK_IDENTIFICADOR;
+global_var_decl: TK_IDENTIFICADOR gv_type ';' {
+  $$ = MakeNode(AST_TYPE_GLOBAL_VAR, NULL);
+  InsertChild($$, MakeNode(TK_IDENTIFICADOR, $1));
+  InsertChild($$, $2);
+}
+| TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';' {
+  $$ = MakeNode(AST_TYPE_GLOBAL_VAR, NULL);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_LITERAL_INT, $3));
+  InsertChild($$, $5);
+};
+
+gv_type: TK_PR_STATIC std_type { $$ = $2; }
+| std_type { $$ = $1; }
+| TK_PR_STATIC TK_IDENTIFICADOR { $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $2); }
+| TK_IDENTIFICADOR { $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1); }
+;
 
 func: func_head command_block { $$ = MakeNode(AST_TYPE_FUNCTION, NULL); InsertChild($$, $1); InsertChild($$, $2); };
 
@@ -419,18 +435,26 @@ case: TK_PR_CASE TK_LIT_INT ':' command_block
 local_var_decl: TK_PR_STATIC local_var_static_consumed { $$ = $2; }| local_var_static_consumed { $$ = $1; };
 local_var_static_consumed: TK_PR_CONST local_var_const_consumed { $$ = $2; } | local_var_const_consumed { $$ = $1; };
 local_var_const_consumed:  
-std_type TK_IDENTIFICADOR { $$ = NULL; }
-| TK_IDENTIFICADOR TK_IDENTIFICADOR { $$ = NULL; }
+std_type TK_IDENTIFICADOR { 
+  $$ = MakeNode(AST_TYPE_DECLR, NULL); 
+  InsertChild($$, $1);
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+}
+| TK_IDENTIFICADOR TK_IDENTIFICADOR { 
+  $$ = MakeNode(AST_TYPE_DECLR, NULL); 
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+}
 | std_type TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR
 {
-  $$ = MakeNode(AST_TYPE_DECLR_ON_ATTR, NULL);
+  $$ = MakeNode(AST_TYPE_DECLR, NULL);
   InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $4));
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE tk_lit
 {
-  $$ = MakeNode(AST_TYPE_DECLR_ON_ATTR, NULL);
+  $$ = MakeNode(AST_TYPE_DECLR, NULL);
   InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $4);

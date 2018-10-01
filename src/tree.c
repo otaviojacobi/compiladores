@@ -129,18 +129,65 @@ void print_fancy (tree_node_t* head) {
         print_fancy(head);
         break;
 
+      case AST_TYPE_GLOBAL_VAR:
+        aux_node = head->first_child;
+        if(((valor_lexico_t*)aux_node->brother_next->value)->type == AST_TYPE_LITERAL_INT){
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+          printf("[");
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+          printf("] ");
+          print_fancy(aux_node);
+        }else{
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+          printf(" ");
+          print_fancy(aux_node);
+        }
+        printf(";\n");
+        if(aux_node)
+          aux_node = aux_node->brother_next;
+          if(aux_node)
+            print_fancy(aux_node);
+        break;
+
       case AST_TYPE_CLASS:
         printf("class ");
         print_fancy(head->first_child);
-        printf(" [");
+        printf(" [\n");
         print_fancy(head->first_child->brother_next);
-        printf("];");
+        printf("\n];\n");
+        if(head->first_child->brother_next->brother_next)
+          print_fancy(head->first_child->brother_next->brother_next);
         break;
       case AST_TYPE_CLASS_FIELD_LIST:
-        printf("AST_TYPE_CLASS_FIELD_LIST");
+        aux_node = head->first_child;
+        while(aux_node){
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+          if(aux_node)
+            printf(" :\n");
+        }
         break;
       case AST_TYPE_CLASS_FIELD:
-        printf("AST_TYPE_CLASS_FIELD");
+        aux_node = head->first_child;
+        while(aux_node){
+          print_fancy(aux_node);
+          aux_node = aux_node->brother_next;
+          if(aux_node)
+            printf(" ");
+        }
+        break;
+
+      case AST_TYPE_PROTECTION_PRIVATE:
+        printf("private ");
+        break;
+      case AST_TYPE_PROTECTION_PUBLIC:
+        printf("public ");
+        break;
+      case AST_TYPE_PROTECTION_PROTECTED:
+        printf("protected ");
         break;
 
       case AST_TYPE_FUNCTION: //TODO
@@ -171,8 +218,8 @@ void print_fancy (tree_node_t* head) {
         printf("\n");
         //printf("childAmount %d\n", head->last_child->childAmount);
 
-        if(head->last_child && ((valor_lexico_t*)head->last_child->value)->type == AST_TYPE_FUNCTION) {
-            print_fancy(head->last_child);
+        if(head->first_child->brother_next->brother_next) {
+            print_fancy(head->first_child->brother_next->brother_next);
         }
         break;
 
@@ -293,12 +340,18 @@ void print_fancy (tree_node_t* head) {
         print_fancy(head->first_child->brother_next);
         break;
 
-      case AST_TYPE_DECLR_ON_ATTR: 
-        print_fancy(head->first_child);
-        printf(" ");
-        print_fancy(head->first_child->brother_next);
-        printf(" <= ");
-        print_fancy(head->first_child->brother_next->brother_next);
+      case AST_TYPE_DECLR: 
+        if(head->childAmount == 3){
+          print_fancy(head->first_child);
+          printf(" ");
+          print_fancy(head->first_child->brother_next);
+          printf(" <= ");
+          print_fancy(head->first_child->brother_next->brother_next);
+        }else{
+          print_fancy(head->first_child);
+          printf(" ");
+          print_fancy(head->first_child->brother_next);
+        }
         break;
 
       case AST_TYPE_FOR_COMMAND:
@@ -319,8 +372,8 @@ void print_fancy (tree_node_t* head) {
         break;
       case AST_TYPE_TERNARY: 
         // for testing: uncomment the break: you will see what part is the actual ternary expression
-        printf("AST_TYPE_TERNARY");
-        break;
+        //printf("AST_TYPE_TERNARY");
+        //break;
         print_fancy(head->first_child);
         printf(" ? ");
         print_fancy(head->first_child->brother_next);
@@ -452,13 +505,34 @@ void print_fancy (tree_node_t* head) {
 
 
       // unary stuff
-      case AST_TYPE_ADDRESS: printf(" &");fflush(stdout);break;
-      case AST_TYPE_POINTER: printf(" *");fflush(stdout);break;
-      case AST_TYPE_QUESTION_MARK: printf(" ?");fflush(stdout);break;
-      case AST_TYPE_HASHTAG: printf(" #");fflush(stdout);break;
-      case AST_TYPE_NEGATIVE:printf(" !");fflush(stdout);break;
+      case AST_TYPE_ADDRESS: 
+        printf(" &");
+        print_fancy(head->first_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_POINTER: 
+        printf(" *");
+        print_fancy(head->first_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_QUESTION_MARK: 
+        printf(" ?");
+        print_fancy(head->first_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_HASHTAG: 
+        printf(" #");
+        print_fancy(head->first_child);
+        fflush(stdout);
+        break;
       case AST_TYPE_NEGATE:
+        printf(" !");
+        print_fancy(head->first_child);
+        fflush(stdout);
+        break;
+      case AST_TYPE_NEGATIVE:
         printf(" - ");
+        print_fancy(head->first_child);
         fflush(stdout);
         break;
 

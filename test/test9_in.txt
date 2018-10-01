@@ -1,3 +1,7 @@
 bool f(int x){
-	x = x > 10 ? true : false;
+	bool y;
+	int x <= 20;
+	CLASS c;
+	y = x > 10;
+	return !y;
 }

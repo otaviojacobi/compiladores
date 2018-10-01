@@ -1,0 +1,12 @@
+nome[10] int;
+
+void f(){
+	print("IMMA SPECIAL FUNCTION :D");
+}
+
+class CUSTOM_TYPE [
+	int a : private string b : protected char c
+];
+
+nome2[1] CUSTOM_TYPE;
+
