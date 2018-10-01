@@ -1,0 +1,6 @@
+6,8c8
+< int a :
+< private  string b :
+< protected  char c
+---
+> 	int a : private string b : protected char c

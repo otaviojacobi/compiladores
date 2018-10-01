@@ -1,0 +1,7 @@
+static int function(int does_it_works, const int x, const CUSTOM y, something_else another_thing) {
+static const float teste;
+static const CUSTOM_TYPE teste2;
+return "PLEASE WORK";
+}
+global_var[10] static char;
+globa_var2[2] static CUSTOM_TYPE;

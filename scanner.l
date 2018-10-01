@@ -102,12 +102,16 @@ valor_lexico_t* construct_valor_lexico(int i, token_type_t type, char* value) {
 
   switch(type) {
     case AST_TYPE_LITERAL_INT: vl->value.intValue = atoi(value);
+      free(value);
       break;
     case AST_TYPE_LITERAL_FLOAT: vl->value.floatValue = atof(value);
+      free(value);      
       break;
     case AST_TYPE_LITERAL_BOOL: vl->value.boolValue = strToBool(value);
+      free(value);      
       break;
     case AST_TYPE_LITERAL_CHAR: vl->value.charValue = value[1];
+      free(value);      
       break;
     case AST_TYPE_IDENTIFICATOR:
     case AST_TYPE_LITERAL_STRING: vl->value.stringValue = value;

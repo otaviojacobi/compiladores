@@ -1,0 +1,31 @@
+==2601== Memcheck, a memory error detector
+==2601== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==2601== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==2601== Command: ./etapa3
+==2601== 
+nome[10] int;
+void f() {
+print("IMMA SPECIAL FUNCTION :D");
+}
+class CUSTOM_TYPE [
+int a :
+private  string b :
+protected  char c
+];
+nome2[1] CUSTOM_TYPE;
+==2601== 
+==2601== HEAP SUMMARY:
+==2601==     in use at exit: 16,458 bytes in 3 blocks
+==2601==   total heap usage: 118 allocs, 115 frees, 35,584 bytes allocated
+==2601== 
+==2601== LEAK SUMMARY:
+==2601==    definitely lost: 0 bytes in 0 blocks
+==2601==    indirectly lost: 0 bytes in 0 blocks
+==2601==      possibly lost: 0 bytes in 0 blocks
+==2601==    still reachable: 16,458 bytes in 3 blocks
+==2601==         suppressed: 0 bytes in 0 blocks
+==2601== Reachable blocks (those to which a pointer was found) are not shown.
+==2601== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==2601== 
+==2601== For counts of detected and suppressed errors, rerun with: -v
+==2601== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

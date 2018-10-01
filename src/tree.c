@@ -94,6 +94,7 @@ void print_DFS(tree_node_t *head) {
 void clean_tree_DFS(tree_node_t *head) {
   stack_t *s = create_stack();
   tree_node_t *current_son;
+  valor_lexico_t* vl;
 
   stack_push(s, head);
   while(!stack_is_empty(s)) {
@@ -105,6 +106,11 @@ void clean_tree_DFS(tree_node_t *head) {
       current_son = current_son -> brother_prev;
     }
     free(_node);
+
+    vl = (valor_lexico_t*) node->value;
+    if(vl->type == AST_TYPE_LITERAL_STRING || vl->type == AST_TYPE_IDENTIFICATOR)
+      free(vl->value.stringValue);
+
     free(node->value);
     free(node);
   }
@@ -121,6 +127,7 @@ void print_fancy (tree_node_t* head) {
     tree_node_t* parameter;
     tree_node_t* aux_node;
     int i;
+    char* stredBool;
 
     switch (value->type) {
 
@@ -267,7 +274,11 @@ void print_fancy (tree_node_t* head) {
       case AST_TYPE_IDENTIFICATOR: printf("%s", value->value.stringValue); fflush(stdout); break;          //DONE
       case AST_TYPE_LITERAL_INT: printf("%d", value->value.intValue); fflush(stdout); break;              //DONE
       case AST_TYPE_LITERAL_FLOAT: printf("%f", value->value.floatValue); fflush(stdout); break;          //DONE
-      case AST_TYPE_LITERAL_BOOL: printf("%s", boolToStr(value->value.boolValue)); fflush(stdout); break; //DONE
+      case AST_TYPE_LITERAL_BOOL: 
+        stredBool = boolToStr(value->value.boolValue);
+        printf("%s", stredBool);
+        free(stredBool); 
+        fflush(stdout); break; //DONE
       case AST_TYPE_LITERAL_CHAR: printf("%c", value->value.charValue); fflush(stdout); break;            //DONE
       case AST_TYPE_LITERAL_STRING: printf("%s", value->value.stringValue);fflush(stdout); break;         //DONE
 
