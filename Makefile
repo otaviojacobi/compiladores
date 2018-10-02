@@ -18,6 +18,7 @@ clean:
 	rm -f test/*_out2.txt
 	rm -f test/*_valgrind.txt
 	rm -f test/*_warning_diff.txt
+	rm -f vgcore.*
 	find . -type f -name '*.log' -delete
 
 sample:
