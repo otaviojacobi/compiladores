@@ -4,7 +4,7 @@ PROGRAM='etapa3'
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\[\033[0;33m\]'
+YELLOW='\033[0;33m'
 NO_COLOR='\033[0m'
 
 clear
@@ -63,7 +63,7 @@ for TEST_FILE in $(ls test/*_in.txt | sort -V); do
     # inform test results
     if [ "$(grep -c "are identical" $WARNING_DIFF_FILE)" -eq 0 ]; then
         echo -ne $YELLOW
-        echo "WARNING, program output from "\"$TEST_FILE\"" differs from original file"
+        echo "WARNING: program output from "\"$TEST_FILE\"" differs from input file"
         echo -ne $NO_COLOR
     fi
 
