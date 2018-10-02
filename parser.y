@@ -211,8 +211,6 @@ TK_IDENTIFICADOR
 }
 | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR   
 {
-  $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
-
   tree_node_t* vector = MakeNode(AST_TYPE_VECTOR, NULL);
   InsertChild(vector, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild(vector, $3);

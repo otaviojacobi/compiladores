@@ -4,7 +4,7 @@ PROGRAM='etapa3'
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\[\033[0;33m\]'
+YELLOW='\033[0;33m'
 NO_COLOR='\033[0m'
 
 clear
