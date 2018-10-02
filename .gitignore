@@ -11,3 +11,7 @@ etapa6
 *.log
 sample
 vgcore.*
+test/*_diff.txt
+test/*_out.txt
+test/*_out2.txt
+test/*_valgrind.txt
