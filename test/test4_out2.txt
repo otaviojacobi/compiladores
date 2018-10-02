@@ -1,7 +1,0 @@
-int get_value(STRUCT_A x) {
-return x$value;
-}
-int get_something_else(int vec) {
-int i <= 4;
-return vec[i];
-}

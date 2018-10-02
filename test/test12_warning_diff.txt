@@ -1,1 +1,0 @@
-Files test/test12_out.txt and test/test12_in.txt are identical

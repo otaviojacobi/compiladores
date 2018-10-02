@@ -1,8 +1,0 @@
-2,5c2,3
-< int field1 :
-< public  int field2 :
-< protected  char field3 :
-< private  string field4
----
-> 	int field1 : public int field2 :
-> 	protected char field3 : private string field4

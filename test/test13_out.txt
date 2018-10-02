@@ -1,9 +1,0 @@
-class BUFF_MY_CLASS [
-int field1 :
-public  int field2 :
-protected  char field3 :
-private  string field4
-];
-bool f(BUFF_MY_CLASS c) {
-return false;
-}

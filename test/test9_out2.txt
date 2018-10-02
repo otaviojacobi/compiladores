@@ -1,7 +1,0 @@
-bool f(int x) {
-bool y;
-int x <= 20;
-CLASS c;
-y = x > 10;
-return  !y;
-}

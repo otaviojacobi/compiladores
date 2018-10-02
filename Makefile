@@ -15,7 +15,9 @@ clean:
 	rm -f parser.output
 	rm -f test/*_diff.txt
 	rm -f test/*_out.txt
+	rm -f test/*_out2.txt
 	rm -f test/*_valgrind.txt
+	rm -f test/*_warning_diff.txt
 	find . -type f -name '*.log' -delete
 
 sample:
