@@ -612,13 +612,13 @@ void print_fancy (tree_node_t* head) {
       // pipe and weird stuff
       case AST_TYPE_FOWARD_PIPE:
         print_fancy(head->first_child);
-        printf(" %>% ");
+        printf(" %%>%% ");
         print_fancy(head->first_child->brother_next);
         break;
       
       case AST_TYPE_BASH_PIPE: 
         print_fancy(head->first_child);
-        printf(" %|% ");
+        printf(" %%|%% ");
         print_fancy(head->first_child->brother_next);
         break;
       
