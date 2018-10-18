@@ -2,15 +2,21 @@
   #include "valor_lexico.h"
   #include "stdio.h"
   #include "tree.h"
+  #include "stack.h"
+  #include "err.h"
 }
 
 %{
   #include "tree.h"
+  #include "stack.h"
+  #include "err.h"
   extern tree_node_t *arvore;
+  extern stack_t *tables;
   int yylex(void);
   void yyerror (char const *s);
   tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico);
   void InsertChild(tree_node_t *father, tree_node_t *children);
+  token_type_t CheckExpression(tree_node_t *node);
 %}
 
 %error-verbose
@@ -617,35 +623,35 @@ expression_list ',' expression {
 | expression                   { $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL), InsertChild($$, $1); }
 ;
 expression:  
-'(' expression ')'        { $$ = $2; }
-| identificador_accessor  { $$ = $1; }
-| '+' expression          { $$ = $2; }
-| '-' expression          { $$ = MakeNode(AST_TYPE_NEGATIVE, NULL); InsertChild($$, $2);}
-| '!' expression          { $$ = MakeNode(AST_TYPE_NEGATE, NULL); InsertChild($$, $2);}
-| '&' expression          { $$ = MakeNode(AST_TYPE_ADDRESS, NULL); InsertChild($$, $2);}
-| '*' expression          { $$ = MakeNode(AST_TYPE_POINTER, NULL); InsertChild($$, $2);}
-| '?' expression          { $$ = MakeNode(AST_TYPE_QUESTION_MARK, NULL); InsertChild($$, $2);}
-| '#' expression          { $$ = MakeNode(AST_TYPE_HASHTAG, NULL); InsertChild($$, $2);}
-| expression '*' expression                 {$$ = MakeNode(AST_TYPE_MUL, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '/' expression                 {$$ = MakeNode(AST_TYPE_DIV, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '%' expression                 {$$ = MakeNode(AST_TYPE_REST, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '+' expression                 {$$ = MakeNode(AST_TYPE_ADD, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '-' expression                 {$$ = MakeNode(AST_TYPE_SUB, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '<' expression                 {$$ = MakeNode(AST_TYPE_LS, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '|' expression                 {$$ = MakeNode(AST_TYPE_BW_OR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '&' expression                 {$$ = MakeNode(AST_TYPE_BW_AND, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '^' expression                 {$$ = MakeNode(AST_TYPE_BW_XOR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression TK_OC_LE expression            {$$ = MakeNode(AST_TYPE_LE, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression '>' expression                 {$$ = MakeNode(AST_TYPE_GR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression TK_OC_GE expression            {$$ = MakeNode(AST_TYPE_GE, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression TK_OC_EQ expression            {$$ = MakeNode(AST_TYPE_EQ, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression TK_OC_NE expression            {$$ = MakeNode(AST_TYPE_NE, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression TK_OC_AND expression           {$$ = MakeNode(AST_TYPE_AND, NULL);InsertChild($$, $1);InsertChild($$, $3);}
-| expression TK_OC_OR expression            {$$ = MakeNode(AST_TYPE_OR, NULL);InsertChild($$, $1);InsertChild($$, $3);}
+'(' expression ')'        { $$ = $2; CheckExpression($$); }
+| identificador_accessor  { $$ = $1; CheckExpression($$); }
+| '+' expression          { $$ = $2; CheckExpression($$);}
+| '-' expression          { $$ = MakeNode(AST_TYPE_NEGATIVE, NULL); InsertChild($$, $2); CheckExpression($$);}
+| '!' expression          { $$ = MakeNode(AST_TYPE_NEGATE, NULL); InsertChild($$, $2); CheckExpression($$);}
+| '&' expression          { $$ = MakeNode(AST_TYPE_ADDRESS, NULL); InsertChild($$, $2); CheckExpression($$);}
+| '*' expression          { $$ = MakeNode(AST_TYPE_POINTER, NULL); InsertChild($$, $2); CheckExpression($$);}
+| '?' expression          { $$ = MakeNode(AST_TYPE_QUESTION_MARK, NULL); InsertChild($$, $2); CheckExpression($$);}
+| '#' expression          { $$ = MakeNode(AST_TYPE_HASHTAG, NULL); InsertChild($$, $2); CheckExpression($$);}
+| expression '*' expression                 {$$ = MakeNode(AST_TYPE_MUL, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '/' expression                 {$$ = MakeNode(AST_TYPE_DIV, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '%' expression                 {$$ = MakeNode(AST_TYPE_REST, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '+' expression                 {$$ = MakeNode(AST_TYPE_ADD, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '-' expression                 {$$ = MakeNode(AST_TYPE_SUB, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '<' expression                 {$$ = MakeNode(AST_TYPE_LS, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '|' expression                 {$$ = MakeNode(AST_TYPE_BW_OR, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '&' expression                 {$$ = MakeNode(AST_TYPE_BW_AND, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '^' expression                 {$$ = MakeNode(AST_TYPE_BW_XOR, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression TK_OC_LE expression            {$$ = MakeNode(AST_TYPE_LE, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression '>' expression                 {$$ = MakeNode(AST_TYPE_GR, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression TK_OC_GE expression            {$$ = MakeNode(AST_TYPE_GE, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression TK_OC_EQ expression            {$$ = MakeNode(AST_TYPE_EQ, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression TK_OC_NE expression            {$$ = MakeNode(AST_TYPE_NE, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression TK_OC_AND expression           {$$ = MakeNode(AST_TYPE_AND, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
+| expression TK_OC_OR expression            {$$ = MakeNode(AST_TYPE_OR, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
 | expression '?' expression ':' expression  {$$ = MakeNode(AST_TYPE_TERNARY, NULL);InsertChild($$, $1);InsertChild($$, $3);InsertChild($$, $5);}
-| pipe_command                              {$$ = $1;}
-| func_call                                 {$$ = $1;}
-| tk_lit                                    {$$ = $1;}
+| pipe_command                              {$$ = $1; CheckExpression($$);}
+| func_call                                 {$$ = $1; CheckExpression($$);}
+| tk_lit                                    {$$ = $1; CheckExpression($$);}
 ;
 
 %%
@@ -670,4 +676,66 @@ void InsertChild(tree_node_t *father, tree_node_t *children) {
     return;
 
   insert_child(father, children);
+}
+
+token_type_t CheckExpression(tree_node_t *node) {
+
+  valor_lexico_t *vl = node->value;
+  token_type_t first_type;
+  token_type_t second_type;
+
+  switch(vl->type) {
+    case AST_TYPE_LITERAL_CHAR: return AST_TYPE_CHAR; break;
+    case AST_TYPE_LITERAL_BOOL: return AST_TYPE_BOOL; break;
+    case AST_TYPE_LITERAL_FLOAT: return AST_TYPE_FLOAT; break;
+    case AST_TYPE_LITERAL_INT: return AST_TYPE_INT; break;
+    case AST_TYPE_LITERAL_STRING: return AST_TYPE_STRING; break;
+    
+
+    //TODO: CHECK BITWISE OPERATORS !!!
+    case AST_TYPE_LS:
+    case AST_TYPE_LE:
+    case AST_TYPE_GR:
+    case AST_TYPE_GE:
+    case AST_TYPE_EQ:
+    case AST_TYPE_NE:
+    case AST_TYPE_AND:
+    case AST_TYPE_OR:
+      first_type = CheckExpression(node->first_child);
+      second_type = CheckExpression(node->first_child->brother_next);
+      if( (first_type  == AST_TYPE_INT || first_type ==  AST_TYPE_FLOAT || first_type  == AST_TYPE_BOOL) && 
+          (second_type == AST_TYPE_INT || second_type == AST_TYPE_FLOAT || second_type == AST_TYPE_BOOL) )
+        return AST_TYPE_BOOL;
+      quit(ERR_WRONG_TYPE, "Wrong type.");
+      break;
+
+    case AST_TYPE_MUL:
+    case AST_TYPE_REST:
+    case AST_TYPE_ADD:
+    case AST_TYPE_SUB:
+    case AST_TYPE_DIV:
+      first_type = CheckExpression(node->first_child);
+      second_type = CheckExpression(node->first_child->brother_next);
+        
+      if(first_type == AST_TYPE_BOOL && second_type == AST_TYPE_BOOL)
+        return AST_TYPE_BOOL;
+
+      if( (first_type == AST_TYPE_INT && second_type == AST_TYPE_INT) ||
+          (first_type == AST_TYPE_BOOL && second_type == AST_TYPE_INT) ||
+          (first_type == AST_TYPE_INT && second_type == AST_TYPE_BOOL) )
+        return AST_TYPE_INT;
+
+      if( (first_type == AST_TYPE_FLOAT && second_type == AST_TYPE_FLOAT) ||
+          (first_type == AST_TYPE_BOOL && second_type == AST_TYPE_FLOAT) ||
+          (first_type == AST_TYPE_FLOAT && second_type == AST_TYPE_BOOL) ||
+          (first_type == AST_TYPE_INT && second_type == AST_TYPE_FLOAT) ||
+          (first_type == AST_TYPE_FLOAT && second_type == AST_TYPE_INT) )
+        return AST_TYPE_FLOAT;
+
+
+      quit(ERR_WRONG_TYPE, "Wrong type.");
+      break;
+
+  }
+
 }
