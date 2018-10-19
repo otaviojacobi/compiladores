@@ -1,0 +1,6 @@
+int f(int x, float z){
+    float a;
+    int b;
+
+    b = a + 3;
+}

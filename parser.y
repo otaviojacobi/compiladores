@@ -222,6 +222,11 @@ TK_IDENTIFICADOR
   $$ = MakeNode(AST_TYPE_VECTOR, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, $3);
+
+  token_type_t t = CheckExpression($3);
+
+  if(t != AST_TYPE_BOOL && t != AST_TYPE_INT && t != AST_TYPE_FLOAT)
+    quit(ERR_VECTOR, "You're trying to access a vector with some invalid type");
 }
 | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
 {
@@ -256,13 +261,13 @@ field: protection std_type TK_IDENTIFICADOR
   $$ = MakeNode(AST_TYPE_CLASS_FIELD, NULL);
   InsertChild($$, $1);                        
   InsertChild($$, $2);                        
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));                       
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
 }
 | std_type TK_IDENTIFICADOR 
 { 
   $$ = MakeNode(AST_TYPE_CLASS_FIELD, NULL);
   InsertChild($$, $1);                        
-  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));                       
+  InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
 };
 
 global_var_decl: TK_IDENTIFICADOR gv_type ';' {
@@ -465,7 +470,7 @@ std_type TK_IDENTIFICADOR {
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
   
-  token_type_t type = ((valor_lexico_t*)(((tree_node_t*)$1)->value))->type;
+  token_type_t type = ((valor_lexico_t*)$1->value)->type;
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0); //TODO: discover last 3 values from tree
@@ -498,7 +503,23 @@ attribution: identificador_accessor '=' expression
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
   InsertChild($$, $1);
   InsertChild($$, $3);
+  
+  token_type_t exp_type = CheckExpression($3);
+  token_type_t ident_type;
 
+  symbol_table_t *t = find_item(&outer_table, ((valor_lexico_t *)$1->value)->value.stringValue);
+  if(t != NULL) {
+    ident_type = ((symbol_table_item_t *)t->item)->type;
+  }
+
+  if( (exp_type == AST_TYPE_STRING && ident_type != AST_TYPE_STRING) ||
+      (exp_type != AST_TYPE_STRING && ident_type == AST_TYPE_STRING) )
+    quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
+
+  if ( (exp_type == AST_TYPE_CHAR && ident_type != AST_TYPE_CHAR) ||
+       (exp_type != AST_TYPE_CHAR && ident_type == AST_TYPE_CHAR) )
+    quit(ERR_CHAR_TO_X, "Chars can't be implicit casted.");
+    
 }
 ;
 
@@ -777,7 +798,7 @@ int get_type_size(token_type_t type) {
     case AST_TYPE_FLOAT: return 8;
     case AST_TYPE_BOOL: return 1;
     case AST_TYPE_CHAR: return 1;
-    case AST_TYPE_STRING: quit(-1, "TODO -> STRING"); break;
+    case AST_TYPE_STRING: return -1; //TOOD: FIXMEEEE
   }
 }
 
