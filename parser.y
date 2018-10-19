@@ -4,19 +4,27 @@
   #include "tree.h"
   #include "stack.h"
   #include "err.h"
+  #include "symbol_table.h"
 }
 
 %{
   #include "tree.h"
   #include "stack.h"
   #include "err.h"
+  #include "symbol_table.h"
+
   extern tree_node_t *arvore;
-  extern stack_t *tables;
+  //extern stack_t *tables = create_stack();
+  symbol_table_t *outer_table = NULL;
+  //stack_push(tables, outer_table);
+
   int yylex(void);
   void yyerror (char const *s);
+  int get_line_number(void);
   tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico);
   void InsertChild(tree_node_t *father, tree_node_t *children);
   token_type_t CheckExpression(tree_node_t *node);
+  int get_type_size(token_type_t type);
 %}
 
 %error-verbose
@@ -198,24 +206,24 @@ TK_LIT_INT       { $$ = MakeNode(AST_TYPE_LITERAL_INT, $1); }
 | TK_LIT_STRING  { $$ = MakeNode(AST_TYPE_LITERAL_STRING, $1); }
 ;
 
-identificador_accessor:  
+identificador_accessor:
 TK_IDENTIFICADOR
 {
   $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1);
 }
-| TK_IDENTIFICADOR '$' TK_IDENTIFICADOR                      
+| TK_IDENTIFICADOR '$' TK_IDENTIFICADOR
 {
   $$ = MakeNode(AST_TYPE_OBJECT, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
 }
-| TK_IDENTIFICADOR '[' expression ']'                        
+| TK_IDENTIFICADOR '[' expression ']'
 {
   $$ = MakeNode(AST_TYPE_VECTOR, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, $3);
 }
-| TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR   
+| TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
 {
   tree_node_t* vector = MakeNode(AST_TYPE_VECTOR, NULL);
   InsertChild(vector, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
@@ -454,6 +462,15 @@ std_type TK_IDENTIFICADOR {
   $$ = MakeNode(AST_TYPE_DECLR, NULL); 
   InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  
+  token_type_t type = ((valor_lexico_t*)(((tree_node_t*)$1)->value))->type;
+  token_value_t value = ((valor_lexico_t*)$2)->value;
+
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0); //TODO: discover last 3 values from tree
+  add_item(&outer_table, value.stringValue, item);
+
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR { 
   $$ = MakeNode(AST_TYPE_DECLR, NULL); 
@@ -481,6 +498,7 @@ attribution: identificador_accessor '=' expression
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
   InsertChild($$, $1);
   InsertChild($$, $3);
+
 }
 ;
 
@@ -683,6 +701,7 @@ token_type_t CheckExpression(tree_node_t *node) {
   valor_lexico_t *vl = node->value;
   token_type_t first_type;
   token_type_t second_type;
+  symbol_table_t *t;
 
   switch(vl->type) {
     case AST_TYPE_LITERAL_CHAR: return AST_TYPE_CHAR; break;
@@ -736,6 +755,35 @@ token_type_t CheckExpression(tree_node_t *node) {
       quit(ERR_WRONG_TYPE, "Wrong type.");
       break;
 
+    case AST_TYPE_IDENTIFICATOR:
+
+      t = find_item(&outer_table, ((valor_lexico_t *)node->value)->value.stringValue);
+      if(t != NULL) {
+        return ((symbol_table_item_t *)t->item)->type;
+      }
+      else {
+        quit(ERR_UNDECLARED, "Not declared\n");
+      }
+
+      break;
+
   }
 
 }
+
+int get_type_size(token_type_t type) {
+  switch(type) {
+    case AST_TYPE_INT: return 4;
+    case AST_TYPE_FLOAT: return 8;
+    case AST_TYPE_BOOL: return 1;
+    case AST_TYPE_CHAR: return 1;
+    case AST_TYPE_STRING: quit(-1, "TODO -> STRING"); break;
+  }
+}
+
+// symbol_table_t* get_table(void) {
+//   if(outer_table == NULL) {
+//     outer_table = (symbol_table_t*)malloc(sizeof(symbol_table_t));
+//   }
+//   return outer_table;
+// }

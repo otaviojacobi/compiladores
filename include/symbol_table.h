@@ -40,6 +40,16 @@ int add_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item
 symbol_table_t *find_item(symbol_table_t **SYMBOL_TABLE, char *key);
 int remove_item(symbol_table_t **SYMBOL_TABLE, char *key);
 int clear_table(symbol_table_t **SYMBOL_TABLE);
+void create_table_item(symbol_table_item_t* item, 
+                       int line, 
+                       int nature,
+                       token_type_t type,
+                       int type_size,
+                       _arg_list_t *arg_list,
+                       token_value_t value,
+                       int is_const,
+                       int is_static,
+                       int is_vector );
 
 
 #endif

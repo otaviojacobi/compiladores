@@ -66,3 +66,25 @@ int clear_table(symbol_table_t **SYMBOL_TABLE) {
 
   return 0;
 }
+
+void create_table_item(symbol_table_item_t* item, 
+                       int line, 
+                       int nature,
+                       token_type_t type,
+                       int type_size,
+                       _arg_list_t *arg_list,
+                       token_value_t value,
+                       int is_const,
+                       int is_static,
+                       int is_vector ) {
+
+    item->line = line;
+    item->nature = nature;
+    item->type = type;
+    item->type_size = type_size;
+    item->arg_list = arg_list;
+    item->value = value;
+    item->is_const = is_const;
+    item->is_static = is_static;
+    item->is_vector = is_vector;
+}
