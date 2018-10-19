@@ -453,13 +453,35 @@ case: TK_PR_CASE TK_LIT_INT ':' command_block
 
 local_var_decl: TK_PR_STATIC local_var_static_consumed { 
   $$ = MakeNode(AST_TYPE_STATIC, NULL); 
-  InsertChild($$, $2); 
+  InsertChild($$, $2);
+
+  char* identifier;
+
+  if ( ((valor_lexico_t*)$2->value)->type == AST_TYPE_CONST ) {
+    identifier = ((valor_lexico_t*)($2->first_child->first_child->brother_next->value))->value.stringValue;
+  }
+
 }
 | local_var_static_consumed { $$ = $1; };
-local_var_static_consumed: TK_PR_CONST local_var_const_consumed { 
+local_var_static_consumed: TK_PR_CONST local_var_const_consumed {
+
   $$ = MakeNode(AST_TYPE_CONST, NULL);
   InsertChild($$, $2);
-} 
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+
+  char* identifier = ((valor_lexico_t*)($2->first_child->brother_next->value))->value.stringValue;
+
+  symbol_table_t *aux = find_item(&outer_table, identifier);
+
+  memcpy(item, aux->item, sizeof(symbol_table_item_t));
+  item->is_const = 1;
+
+  if(update_item(&outer_table, identifier, item) == -1)
+    quit(ERR_UNDECLARED, "Something went terrebly wrong...");
+
+}
+
 | local_var_const_consumed { $$ = $1; };
 
 local_var_const_consumed:  
@@ -474,7 +496,8 @@ std_type TK_IDENTIFICADOR {
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0); //TODO: discover last 3 values from tree
-  add_item(&outer_table, value.stringValue, item);
+  if(add_item(&outer_table, value.stringValue, item) == -1)
+    quit(ERR_DECLARED, "Token already declared");
 
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR { 

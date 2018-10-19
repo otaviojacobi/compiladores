@@ -15,6 +15,22 @@ int add_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item
 
 }
 
+int update_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item) {
+  
+  symbol_table_t *aux = find_item(SYMBOL_TABLE, key);
+
+  if(aux != NULL) {
+    remove_item(SYMBOL_TABLE, key);
+    symbol_table_t *st = (symbol_table_t *)malloc(sizeof(symbol_table_t));
+    strcpy(st->key, key);
+    st->item = item;
+    HASH_ADD_STR(*SYMBOL_TABLE, key, st);
+    return 0;
+  }
+  return -1;
+
+}
+
 symbol_table_t *find_item(symbol_table_t **SYMBOL_TABLE, char *key) {
 
   symbol_table_t *st;

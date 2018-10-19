@@ -1,5 +1,5 @@
 int f(int x, float z){
-    float a;
+    static const float a;
     int b;
 
     b = a + 3;
