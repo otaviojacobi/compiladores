@@ -83,6 +83,28 @@ int clear_table(symbol_table_t **SYMBOL_TABLE) {
   return 0;
 }
 
+void _print_item(symbol_table_t* t) {
+  printf("%s: ", t->key);
+  printf("\t%d", t->item->line);
+  printf("\t%d", t->item->nature);
+  printf("\t%d", t->item->type);
+  printf("\t%d\t", t->item->type_size);
+  printf("\t%d\t", t->item->is_const);
+  printf("\t%d\t", t->item->is_static);
+  printf("\t%d\n", t->item->is_vector);
+  
+}
+
+void print_table(symbol_table_t **SYMBOL_TABLE) {
+  symbol_table_t *current, *tmp;
+
+  printf("KEY: line,\tnature,\ttype,\ttype_size,\tis_const,\tis_staic,\tis_vector\n");
+
+  HASH_ITER(hh, *SYMBOL_TABLE, current, tmp) {
+    _print_item(current);
+  }
+}
+
 void create_table_item(symbol_table_item_t* item, 
                        int line, 
                        int nature,

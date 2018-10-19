@@ -15,7 +15,7 @@
 
   extern tree_node_t *arvore;
   //extern stack_t *tables = create_stack();
-  symbol_table_t *outer_table = NULL;
+  extern symbol_table_t *outer_table;
   //stack_push(tables, outer_table);
 
   int yylex(void);
@@ -459,7 +459,19 @@ local_var_decl: TK_PR_STATIC local_var_static_consumed {
 
   if ( ((valor_lexico_t*)$2->value)->type == AST_TYPE_CONST ) {
     identifier = ((valor_lexico_t*)($2->first_child->first_child->brother_next->value))->value.stringValue;
+  } else if ( ((valor_lexico_t*)$2->value)->type == AST_TYPE_DECLR ) {
+    identifier = ((valor_lexico_t*)($2->first_child->brother_next->value))->value.stringValue;
+  } else {
+    quit(-1, "Something went terrebly wrong in local_var_decl...");
   }
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  symbol_table_t *aux = find_item(&outer_table, identifier);
+  memcpy(item, aux->item, sizeof(symbol_table_item_t));
+  item->is_static = 1;
+
+  if(update_item(&outer_table, identifier, item) == -1)
+    quit(-1, "Something went terrebly wrong in local_var_decl 2...");
 
 }
 | local_var_static_consumed { $$ = $1; };
@@ -469,7 +481,6 @@ local_var_static_consumed: TK_PR_CONST local_var_const_consumed {
   InsertChild($$, $2);
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
-
   char* identifier = ((valor_lexico_t*)($2->first_child->brother_next->value))->value.stringValue;
 
   symbol_table_t *aux = find_item(&outer_table, identifier);
@@ -478,7 +489,7 @@ local_var_static_consumed: TK_PR_CONST local_var_const_consumed {
   item->is_const = 1;
 
   if(update_item(&outer_table, identifier, item) == -1)
-    quit(ERR_UNDECLARED, "Something went terrebly wrong...");
+    quit(-1, "Something went terrebly wrong in local_var_static_consumed...");
 
 }
 

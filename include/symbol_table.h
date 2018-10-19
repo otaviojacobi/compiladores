@@ -41,6 +41,8 @@ symbol_table_t *find_item(symbol_table_t **SYMBOL_TABLE, char *key);
 int remove_item(symbol_table_t **SYMBOL_TABLE, char *key);
 int clear_table(symbol_table_t **SYMBOL_TABLE);
 int update_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item);
+void print_table(symbol_table_t **SYMBOL_TABLE);
+
 void create_table_item(symbol_table_item_t* item, 
                        int line, 
                        int nature,
