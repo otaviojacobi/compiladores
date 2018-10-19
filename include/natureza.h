@@ -5,3 +5,4 @@
 #define NATUREZA_LITERAL_BOOL       5
 #define NATUREZA_IDENTIFICADOR      6
 #define NATUREZA_FUNCAO             7
+#define NATUREZA_CLASS              8

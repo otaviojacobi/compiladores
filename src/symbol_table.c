@@ -41,17 +41,18 @@ symbol_table_t *find_item(symbol_table_t **SYMBOL_TABLE, char *key) {
 
 void _free_symbol_table_line(symbol_table_t *st) {
 
-  _arg_list_t *aux;
+  arg_list_t *aux;
   if(st->item) {
 
     if(st->item->nature == NATUREZA_LITERAL_STRING) {
       free(st->item->value.stringValue);
     }
 
-    if(st->item->nature == NATUREZA_FUNCAO && st->item->type == AST_TYPE_FUNCTION) {
+    if((st->item->nature == NATUREZA_FUNCAO && st->item->type == AST_TYPE_FUNCTION) || st->item->nature == NATUREZA_CLASS){
       while(st->item->arg_list != NULL) {
         aux = st->item->arg_list;
         st->item->arg_list = st->item->arg_list->next;
+        free(aux->field_name);
         free(aux);
       }
     }
@@ -84,6 +85,9 @@ int clear_table(symbol_table_t **SYMBOL_TABLE) {
 }
 
 void _print_item(symbol_table_t* t) {
+
+  arg_list_t *aux = t->item->arg_list;
+
   printf("%s: ", t->key);
   printf("\t%d", t->item->line);
   printf("\t%d", t->item->nature);
@@ -91,7 +95,17 @@ void _print_item(symbol_table_t* t) {
   printf("\t%d\t", t->item->type_size);
   printf("\t%d\t", t->item->is_const);
   printf("\t%d\t", t->item->is_static);
-  printf("\t%d\n", t->item->is_vector);
+  printf("\t%d", t->item->is_vector);
+
+  if(t->item->arg_list) {
+    printf("\tPARAMS: ");
+    while(aux != NULL) {
+      printf("%s\t", aux->field_name);
+      aux = aux->next;
+    }
+  }
+
+  printf("\n");
   
 }
 
@@ -110,7 +124,7 @@ void create_table_item(symbol_table_item_t* item,
                        int nature,
                        token_type_t type,
                        int type_size,
-                       _arg_list_t *arg_list,
+                       arg_list_t *arg_list,
                        token_value_t value,
                        int is_const,
                        int is_static,

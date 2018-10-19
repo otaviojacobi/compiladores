@@ -1,3 +1,11 @@
+class MC [
+	int field1 : 
+    int field2 :
+	char field3 : 
+    string field4
+];
+
+
 int f(int x, float z){
     static const float a;
     int b;

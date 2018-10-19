@@ -244,6 +244,38 @@ new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
   $$ = MakeNode(AST_TYPE_CLASS, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $4);
+
+  char* identifier = $2->value.stringValue, *aux_str;
+  symbol_table_item_t* item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+
+  arg_list_t *params = NULL, *p_create = NULL, *p_last = NULL;
+  tree_node_t *aux = $4->first_child;
+
+  int counter = 0;
+  while(aux != NULL) {
+    p_create = (arg_list_t*)malloc(sizeof(arg_list_t));
+
+    p_create->type =  ((valor_lexico_t*)aux->first_child->value)->type; //TODO:FIXME FOR PROTECTION
+
+    p_create->field_name = strdup(((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue);
+    p_create->next = NULL;
+
+    if(counter == 0) {
+      params = p_create;
+    } else {
+      p_last->next = p_create;
+    }
+    p_last = p_create;
+
+    aux = aux->brother_next;
+    counter++;
+  }
+
+  create_table_item(item, get_line_number(), NATUREZA_CLASS, AST_TYPE_CLASS,-1, params,$2->value, 0, 0, 0); //TODO: SIZEEEEE
+  if(add_item(&outer_table, identifier, item) == -1)
+    quit(ERR_DECLARED, "Already declared class.");
+
+
 };
 field_list: field_list ':' field 
 {

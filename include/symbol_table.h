@@ -6,12 +6,13 @@
 #include "valor_lexico.h"
 #include "natureza.h"
 
-typedef struct _arg_list {
+typedef struct arg_list {
 
     token_type_t type;
-    struct _arg_list *next;
+    char *field_name; //only in case of new type declaration !!
+    struct arg_list *next;
 
-} _arg_list_t;
+} arg_list_t;
 
 
 typedef struct symbol_table_item {
@@ -20,7 +21,7 @@ typedef struct symbol_table_item {
     int nature;
     token_type_t type;
     int type_size;
-    _arg_list_t *arg_list;
+    arg_list_t *arg_list;
     token_value_t value;
     int is_const;
     int is_static;
@@ -30,7 +31,7 @@ typedef struct symbol_table_item {
 
 typedef struct symbol_table {
 
-    char key[200];
+    char key[30];
     symbol_table_item_t *item;
     UT_hash_handle hh;
 
@@ -48,7 +49,7 @@ void create_table_item(symbol_table_item_t* item,
                        int nature,
                        token_type_t type,
                        int type_size,
-                       _arg_list_t *arg_list,
+                       arg_list_t *arg_list,
                        token_value_t value,
                        int is_const,
                        int is_static,
