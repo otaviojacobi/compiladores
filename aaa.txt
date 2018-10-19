@@ -1,8 +1,8 @@
-class MC [
+class BUFF_MY_CLASS [
 	int field1 : 
-    int field2 :
-	char field3 : 
-    string field4
+    public int field2 :
+	protected char field3 : 
+    private string field4
 ];
 
 

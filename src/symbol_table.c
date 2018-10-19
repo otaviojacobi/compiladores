@@ -100,6 +100,14 @@ void _print_item(symbol_table_t* t) {
   if(t->item->arg_list) {
     printf("\tPARAMS: ");
     while(aux != NULL) {
+      
+      if(aux->protec_level== AST_TYPE_PROTECTION_PRIVATE)
+        printf("private ");
+      if(aux->protec_level== AST_TYPE_PROTECTION_PUBLIC)
+        printf("public ");
+      if(aux->protec_level== AST_TYPE_PROTECTION_PROTECTED)
+        printf("protected ");
+
       printf("%s\t", aux->field_name);
       aux = aux->next;
     }

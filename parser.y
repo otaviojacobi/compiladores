@@ -250,15 +250,24 @@ new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
 
   arg_list_t *params = NULL, *p_create = NULL, *p_last = NULL;
   tree_node_t *aux = $4->first_child;
+  token_type_t aux_type;
 
   int counter = 0;
   while(aux != NULL) {
     p_create = (arg_list_t*)malloc(sizeof(arg_list_t));
 
-    p_create->type =  ((valor_lexico_t*)aux->first_child->value)->type; //TODO:FIXME FOR PROTECTION
+    aux_type = ((valor_lexico_t*)aux->first_child->value)->type; //TODO:FIXME FOR PROTECTION
 
-    p_create->field_name = strdup(((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue);
-    p_create->next = NULL;
+    if(aux_type == AST_TYPE_PROTECTION_PRIVATE || aux_type == AST_TYPE_PROTECTION_PUBLIC || aux_type == AST_TYPE_PROTECTION_PROTECTED) {
+      p_create->type = ((valor_lexico_t*)aux->first_child->brother_next->value)->type;
+      p_create->field_name = strdup(((valor_lexico_t*)aux->first_child->brother_next->brother_next->value)->value.stringValue);
+      p_create->next = NULL;
+      p_create->protec_level = aux_type;
+    } else {
+      p_create->type = aux_type;
+      p_create->field_name = strdup(((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue);
+      p_create->next = NULL;
+    }
 
     if(counter == 0) {
       params = p_create;

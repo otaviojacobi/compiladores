@@ -10,6 +10,7 @@ typedef struct arg_list {
 
     token_type_t type;
     char *field_name; //only in case of new type declaration !!
+    int protec_level; //only in case of new type declaration !!
     struct arg_list *next;
 
 } arg_list_t;
@@ -26,7 +27,6 @@ typedef struct symbol_table_item {
     int is_const;
     int is_static;
     int is_vector;
-
 } symbol_table_item_t;
 
 typedef struct symbol_table {
