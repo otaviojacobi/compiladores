@@ -378,10 +378,21 @@ func: func_head command_block {
 }
 | TK_PR_STATIC func_head command_block {
   $$ = MakeNode(AST_TYPE_STATIC, NULL);
-  tree_node_t* aux = MakeNode(AST_TYPE_FUNCTION, NULL); 
-  InsertChild(aux, $2); 
-  InsertChild(aux, $3);
-  InsertChild($$, aux);
+  tree_node_t* func = MakeNode(AST_TYPE_FUNCTION, NULL); 
+  InsertChild(func, $2); 
+  InsertChild(func, $3);
+  InsertChild($$, func);
+
+  char *identifier = ((valor_lexico_t*)$2->first_child->brother_next->value)->value.stringValue;
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  symbol_table_t *aux = find_item(&outer_table, identifier);
+
+  memcpy(item, aux->item, sizeof(symbol_table_item_t));
+  item->is_static = 1;
+
+  if(update_item(&outer_table, identifier, item) == -1)
+    quit(-1, "Something went terrebly wrong in local_var_decl 2...");
 };
 
 func_head:  std_type_node TK_IDENTIFICADOR param_list
@@ -914,7 +925,18 @@ identificador_accessor TK_OC_SL expression
   InsertChild($$, $3);
 };
 
-return: TK_PR_RETURN expression {$$ = MakeNode(AST_TYPE_RETURN, NULL); InsertChild($$, $2);};
+return: TK_PR_RETURN expression {
+  $$ = MakeNode(AST_TYPE_RETURN, NULL); 
+  InsertChild($$, $2);
+
+  token_type_t type = CheckExpression($$);
+
+  if(type == AST_TYPE_CLASS) {
+    quit(ERR_WRONG_PAR_RETURN, "Can't return custom class");
+  }
+
+  //TODO: how do we find the function which this return belongs to Oo ?
+};
 
 conditional_command: 
 TK_PR_IF '(' expression ')' TK_PR_THEN command_block
@@ -1177,7 +1199,11 @@ token_type_t CheckExpression(tree_node_t *node) {
       st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
       return st->item->type;
 
-      default: return vl->type;
+    case AST_TYPE_RETURN:
+      return CheckExpression(node->first_child);
+
+
+    default: return vl->type;
   }
 }
 
