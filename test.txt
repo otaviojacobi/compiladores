@@ -1,0 +1,17 @@
+class STRUCT_TYPE [
+	int b: string c
+];
+
+int f(STRUCT_TYPE x, int y){
+	return 1 + x$b + 2*y;
+}
+
+int inc(int x){ 
+return x+1; 
+}
+
+STRUCT_TYPE make_struct(int b, string c){
+	STRUCT_TYPE struct;
+	struct$b = b;
+	struct$c = c;
+}

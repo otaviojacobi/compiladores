@@ -4,6 +4,7 @@
   #include "tree.h"
   #include "stack.h"
   #include "err.h"
+  #include "scope_stack.h"
   #include "symbol_table.h"
 }
 
@@ -11,12 +12,13 @@
   #include "tree.h"
   #include "stack.h"
   #include "err.h"
+  #include "scope_stack.h"
   #include "symbol_table.h"
 
   extern tree_node_t *arvore;
-  //extern stack_t *tables = create_stack();
+  extern stack_node_t *tables;
   extern symbol_table_t *outer_table;
-  //stack_push(tables, outer_table);
+  symbol_table_t *inner_scope;
 
   int yylex(void);
   void yyerror (char const *s);
@@ -24,7 +26,7 @@
   tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico);
   void InsertChild(tree_node_t *father, tree_node_t *children);
   token_type_t CheckExpression(tree_node_t *node);
-  int get_type_size(token_type_t type);
+  int get_type_size(token_type_t type, char* name);
   void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
   void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector);
   int is_compact(token_type_t t1, token_type_t t2);
@@ -216,7 +218,7 @@ TK_IDENTIFICADOR
 
   char* identifier = $1->value.stringValue;
 
-  if(find_item(&outer_table, identifier) == NULL) {
+  if(find_item(tables, identifier) == NULL) {
     quit(ERR_UNDECLARED, "Identifier not declared");
   }
 }
@@ -242,7 +244,7 @@ TK_IDENTIFICADOR
 
   char* identifier = $1->value.stringValue;
 
-  symbol_table_t *st = find_item(&outer_table, identifier);
+  symbol_table_t *st = find_item(tables, identifier);
   if( st == NULL) {
     quit(ERR_UNDECLARED, "Identifier not declared");
   }
@@ -273,7 +275,7 @@ new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
 
   char* identifier = $2->value.stringValue, *aux_str;
 
-  if(find_item(&outer_table, identifier)) {
+  if(find_item(tables, identifier)) {
     quit(ERR_DECLARED, "Already declared identifier..");
   }
 
@@ -312,7 +314,7 @@ new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
   }
 
   create_table_item(item, get_line_number(), NATUREZA_CLASS, AST_TYPE_CLASS,-1, params,$2->value, 0, 0, 0); //TODO: SIZEEEEE
-  if(add_item(&outer_table, identifier, item) == -1)
+  if(add_item(tables, identifier, item) == -1)
     quit(ERR_DECLARED, "Already declared identifier.");
 
 
@@ -375,6 +377,7 @@ func: func_head command_block {
   $$ = MakeNode(AST_TYPE_FUNCTION, NULL); 
   InsertChild($$, $1); 
   InsertChild($$, $2); 
+  pop(&tables);
 }
 | TK_PR_STATIC func_head command_block {
   $$ = MakeNode(AST_TYPE_STATIC, NULL);
@@ -382,6 +385,7 @@ func: func_head command_block {
   InsertChild(aux, $2); 
   InsertChild(aux, $3);
   InsertChild($$, aux);
+  pop(&tables);
 };
 
 func_head:  std_type_node TK_IDENTIFICADOR param_list
@@ -401,6 +405,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   token_type_t type = ((valor_lexico_t*)($1->value))->type;
   token_value_t value = $2->value;
 
+  new_scope(&tables, &inner_scope);
 
   arg_list_t *params = NULL, *p_create = NULL, *p_last = NULL;
   tree_node_t *aux = $3;
@@ -422,7 +427,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
         is_const = 1;
 
         if(((valor_lexico_t*)aux->first_child->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
-          st = find_item(&outer_table, ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue);
+          st = find_item(tables, ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue);
           if(st == NULL) {
             quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
           }
@@ -438,7 +443,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
         is_const = 0;
 
         if(((valor_lexico_t*)aux->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
-          st = find_item(&outer_table, ((valor_lexico_t*)aux->first_child->value)->value.stringValue);
+          st = find_item(tables, ((valor_lexico_t*)aux->first_child->value)->value.stringValue);
           if(st == NULL) {
             quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
           }
@@ -453,9 +458,9 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       }
       aux_type = p_create->type;
 
-      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type),NULL, aux_value, is_const, 0, 0);
+      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, NULL),NULL, aux_value, is_const, 0, 0);
 
-      if(add_item(&outer_table, param_name, aux_item) == -1)
+      if(add_item(tables, param_name, aux_item) == -1)
           quit(ERR_DECLARED, "Token already declared");
 
       if(counter == 0) {
@@ -470,8 +475,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
     }
   }
 
-  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type),params, value, 0, 0, 0);
-  if(add_item(&outer_table, value.stringValue, item) == -1)
+  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type, NULL),params, value, 0, 0, 0);
+  if(add_item(tables->next, value.stringValue, item) == -1)
     quit(ERR_DECLARED, "Token already declared");
 
 }
@@ -481,6 +486,92 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $3);
+  
+    char *identifier =  $2->value.stringValue;
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  symbol_table_item_t *aux_item = NULL;
+  symbol_table_t *st = NULL;
+
+
+  token_type_t type = AST_TYPE_IDENTIFICATOR;
+  char* type_name = $1->value.stringValue;
+  token_value_t value = $2->value;
+
+  new_scope(&tables, &inner_scope);
+
+  arg_list_t *params = NULL, *p_create = NULL, *p_last = NULL;
+  tree_node_t *aux = $3;
+  token_type_t aux_type;
+  token_value_t aux_value;
+
+  int counter = 0;
+  int is_const;
+  char *param_name;
+
+  if(aux != NULL) {
+    aux = aux->first_child;
+    while(aux != NULL) {
+
+      p_create = (arg_list_t*)malloc(sizeof(arg_list_t));
+      aux_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+      
+      if (((valor_lexico_t*)aux->value)->type == AST_TYPE_CONST) {
+        is_const = 1;
+
+        if(((valor_lexico_t*)aux->first_child->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
+          st = find_item(tables, ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue);
+          if(st == NULL) {
+            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+          }
+          p_create->type = AST_TYPE_CLASS;
+          p_create->field_name = strdup(st->key);
+          aux_value = st->item->value;
+        } else {
+          p_create->type = ((valor_lexico_t*)aux->first_child->first_child->value)->type;
+          aux_value = ((valor_lexico_t*)aux->first_child->first_child->brother_next->value)->value;
+        }
+        param_name=((valor_lexico_t*)aux->first_child->first_child->brother_next->value)->value.stringValue;
+      } else {
+        is_const = 0;
+
+        if(((valor_lexico_t*)aux->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
+          st = find_item(tables, ((valor_lexico_t*)aux->first_child->value)->value.stringValue);
+          if(st == NULL) {
+            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+          }
+          p_create->field_name = strdup(st->key);
+          p_create->type = AST_TYPE_CLASS;
+          aux_value = st->item->value;
+        } else {
+          p_create->type = ((valor_lexico_t*)aux->first_child->value)->type;
+          aux_value = ((valor_lexico_t*)aux->first_child->brother_next->value)->value;
+        }
+        param_name=((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue;
+      }
+      aux_type = p_create->type;
+
+      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, NULL),NULL, aux_value, is_const, 0, 0);
+
+      if(add_item(tables, param_name, aux_item) == -1)
+          quit(ERR_DECLARED, "Token already declared");
+
+      if(counter == 0) {
+        params = p_create;
+      } else {
+        p_last->next = p_create;
+      }
+      p_last = p_create;
+
+      aux = aux->brother_next;
+      counter++;
+    }
+  }
+
+  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type, type_name),params, value, 0, 0, 0);
+  if(add_item(tables->next, value.stringValue, item) == -1)
+    quit(ERR_DECLARED, "Token already declared");
+
 };
 
 param_list: '(' parameters ')' { $$ = $2;
@@ -533,7 +624,12 @@ std_type_node TK_IDENTIFICADOR {
   InsertChild($$, aux);
 };
 
-command_block: '{' command_seq '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); InsertChild($$, $2); } | '{' '}' { $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); };
+command_block: '{' command_seq '}' { 
+  $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); 
+  InsertChild($$, $2); 
+} | '{' '}' { 
+  $$ = MakeNode(AST_TYPE_COMMAND_BLOCK, NULL); 
+};
 
 command_seq: command_seq simple_command
 {
@@ -628,11 +724,11 @@ local_var_decl: TK_PR_STATIC local_var_static_consumed {
   }
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
-  symbol_table_t *aux = find_item(&outer_table, identifier);
+  symbol_table_t *aux = find_item(tables, identifier);
   memcpy(item, aux->item, sizeof(symbol_table_item_t));
   item->is_static = 1;
 
-  if(update_item(&outer_table, identifier, item) == -1)
+  if(_update_item(&outer_table, identifier, item) == -1)
     quit(-1, "Something went terrebly wrong in local_var_decl 2...");
 
 }
@@ -645,12 +741,12 @@ local_var_static_consumed: TK_PR_CONST local_var_const_consumed {
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
   char* identifier = ((valor_lexico_t*)($2->first_child->brother_next->value))->value.stringValue;
 
-  symbol_table_t *aux = find_item(&outer_table, identifier);
+  symbol_table_t *aux = find_item(tables, identifier);
 
   memcpy(item, aux->item, sizeof(symbol_table_item_t));
   item->is_const = 1;
 
-  if(update_item(&outer_table, identifier, item) == -1)
+  if(_update_item(&outer_table, identifier, item) == -1)
     quit(-1, "Something went terrebly wrong in local_var_static_consumed...");
 
 }
@@ -668,8 +764,8 @@ std_type TK_IDENTIFICADOR {
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0);
-  if(add_item(&outer_table, value.stringValue, item) == -1)
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, NULL),NULL, value, 0, 0, 0);
+  if(add_item(tables, value.stringValue, item) == -1)
     quit(ERR_DECLARED, "Token already declared");
 
 }
@@ -683,12 +779,12 @@ std_type TK_IDENTIFICADOR {
   token_value_t value = $1->value;
   char *identifier = ((valor_lexico_t*)$2)->value.stringValue;
 
-  if(find_item(&outer_table, value.stringValue) == NULL) {
+  if(find_item(tables, value.stringValue) == NULL) {
     quit(ERR_UNDECLARED, "Token type not declared");
   }
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, AST_TYPE_CLASS,-1,NULL, value, 0, 0, 0); //TODO: DISCOVER REAL SIZE
-  if(add_item(&outer_table, identifier, item) == -1)
+  if(add_item(tables, identifier, item) == -1)
     quit(ERR_DECLARED, "Token already declared!");
 
 }
@@ -702,7 +798,7 @@ std_type TK_IDENTIFICADOR {
   char *identifier = ((valor_lexico_t*)$2)->value.stringValue;
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
 
-  symbol_table_t *st = find_item (&outer_table, ((valor_lexico_t*)$4)->value.stringValue);
+  symbol_table_t *st = find_item(tables, ((valor_lexico_t*)$4)->value.stringValue);
   if( st == NULL ) {
     quit(ERR_UNDECLARED, "Not declared variable on assignement");
   }
@@ -722,8 +818,8 @@ std_type TK_IDENTIFICADOR {
        (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) )
     quit(ERR_CHAR_TO_X, "Chars can't be implicit casted.");
 
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type), NULL, $2->value, 0, 0, 0); //TODO: SIZEE
-  if(add_item(&outer_table, identifier, item) == -1)
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, NULL), NULL, $2->value, 0, 0, 0); //TODO: SIZEE
+  if(add_item(tables, identifier, item) == -1)
     quit(ERR_DECLARED, "Token already declaredd");
 
 }
@@ -751,8 +847,8 @@ std_type TK_IDENTIFICADOR {
   //All others can be implicit cast between themselves...
 
   char* identifier = value.stringValue;
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0); //TODO: SIZEE
-  if(add_item(&outer_table, identifier, item) == -1)
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, NULL),NULL, value, 0, 0, 0); //TODO: SIZEE
+  if(add_item(tables, identifier, item) == -1)
     quit(ERR_DECLARED, "Token already declared");
 
 }
@@ -768,10 +864,17 @@ attribution: identificador_accessor '=' expression
   
   token_type_t exp_type = CheckExpression($3);
   token_type_t incoming_type;
-
-  symbol_table_t *t = find_item(&outer_table, ((valor_lexico_t *)$1->value)->value.stringValue);
+  symbol_table_t *t = find_item(tables, ((valor_lexico_t *)$1->first_child->value)->value.stringValue);
   if(t != NULL) {
     incoming_type = ((symbol_table_item_t *)t->item)->type;
+    if(incoming_type == AST_TYPE_CLASS){
+      char* target_name = ((valor_lexico_t *)$1->first_child->brother_next->value)->value.stringValue;
+      arg_list_t* fields = find_item(tables, t->item->value.stringValue)->item->arg_list;
+      for(; fields!=NULL; fields=fields->next){
+        if(strcmp(fields->field_name, target_name) == 0)
+          incoming_type=fields->type;
+      }
+    }
   }
 
   if( (exp_type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
@@ -795,7 +898,7 @@ TK_IDENTIFICADOR '(' args ')'
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, $3);
 
-  symbol_table_t *st = find_item(&outer_table, $1->value.stringValue);
+  symbol_table_t *st = find_item(tables, $1->value.stringValue);
   symbol_table_t *st_aux = NULL;
   tree_node_t *node;
 
@@ -817,7 +920,7 @@ TK_IDENTIFICADOR '(' args ')'
 
       switch(type) {
         case AST_TYPE_IDENTIFICATOR:
-          st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->value))->value.stringValue);
+          st_aux = find_item(tables, ((valor_lexico_t*)(node->value))->value.stringValue);
           
           if(!is_compact(st_aux->item->type, params->type)) {
             quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
@@ -830,11 +933,11 @@ TK_IDENTIFICADOR '(' args ')'
 
         case AST_TYPE_OBJECT:
           if (((valor_lexico_t*)node->first_child->value)->type == AST_TYPE_VECTOR) {
-            st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
+            st_aux = find_item(tables, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
           } else {
-            st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+            st_aux = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
           }
-          st_aux = find_item(&outer_table, st_aux->item->value.stringValue);
+          st_aux = find_item(tables, st_aux->item->value.stringValue);
           params_aux = st_aux->item->arg_list;
           found = 0;
           while(params_aux != NULL) {
@@ -853,7 +956,7 @@ TK_IDENTIFICADOR '(' args ')'
         break;
 
         case AST_TYPE_VECTOR:
-          st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+          st_aux = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
           
           if(!is_compact(st_aux->item->type, params->type)) {
             quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
@@ -1129,7 +1232,7 @@ token_type_t CheckExpression(tree_node_t *node) {
 
     case AST_TYPE_IDENTIFICATOR:
 
-      st = find_item(&outer_table, ((valor_lexico_t *)node->value)->value.stringValue);
+      st = find_item(tables, ((valor_lexico_t *)node->value)->value.stringValue);
       if(st != NULL) {
         return ((symbol_table_item_t *)st->item)->type;
       }
@@ -1140,7 +1243,7 @@ token_type_t CheckExpression(tree_node_t *node) {
       break;
 
     case AST_TYPE_VECTOR:
-          st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+          st = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
           if(st == NULL)
             quit(ERR_UNDECLARED, "Not declared variable");
           return st->item->type;
@@ -1148,13 +1251,13 @@ token_type_t CheckExpression(tree_node_t *node) {
     case AST_TYPE_OBJECT:
 
           if (((valor_lexico_t*)node->first_child->value)->type == AST_TYPE_VECTOR) {
-            st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
+            st = find_item(tables, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
           } else {
-            st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+            st = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
           }
           if(st == NULL)
             quit(ERR_UNDECLARED, "Not declared variable");
-          st = find_item(&outer_table, st->item->value.stringValue);
+          st = find_item(tables, st->item->value.stringValue);
           
           params_aux = st->item->arg_list;
           found = 0;
@@ -1180,13 +1283,14 @@ token_type_t CheckExpression(tree_node_t *node) {
   }
 }
 
-int get_type_size(token_type_t type) {
+int get_type_size(token_type_t type, char* name) {
   switch(type) {
     case AST_TYPE_INT: return 4;
     case AST_TYPE_FLOAT: return 8;
     case AST_TYPE_BOOL: return 1;
     case AST_TYPE_CHAR: return 1;
-    case AST_TYPE_STRING: return -1; //TOOD: FIXMEEEE
+    case AST_TYPE_STRING: return -1; //TODO: FIXMEEEE
+    case AST_TYPE_IDENTIFICATOR: if(name == NULL) printf("Erro: get_type_size AST_TYPE_IDENTIFICATOR sem nome do identificador"); else return find_item(tables, name)->item->type_size;
   }
 }
 
@@ -1195,7 +1299,7 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
   char* identifier = first->value.stringValue, *aux_str;
   symbol_table_item_t *item = NULL;
 
-  if(find_item(&outer_table, identifier)) {
+  if(find_item(tables, identifier)) {
     quit(ERR_DECLARED, "Already declared identifier..");
   }
 
@@ -1206,32 +1310,32 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
   if(type == AST_TYPE_STATIC) {
     if (((valor_lexico_t*)second->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
 
-      if(find_item(&outer_table, ((valor_lexico_t*)second->first_child->value)->value.stringValue) == NULL) {
+      if(find_item(tables, ((valor_lexico_t*)second->first_child->value)->value.stringValue) == NULL) {
         quit(ERR_UNDECLARED, "Not declared type");
       } else {
         type=AST_TYPE_CLASS;
       }
 
-      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)second->first_child->value)->value, 0, 1, is_vector); //TODO: discover last 3 values from tree
+      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type, NULL), NULL, ((valor_lexico_t*)second->first_child->value)->value, 0, 1, is_vector); //TODO: discover last 3 values from tree
     }
     else {
       type = ((valor_lexico_t*)second->first_child->value)->type;
-      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)second->value)->value, 0, 1, is_vector); //TODO: discover last 3 values from tree
+      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type, NULL), NULL, ((valor_lexico_t*)second->value)->value, 0, 1, is_vector); //TODO: discover last 3 values from tree
     }
   } else {
 
     if(((valor_lexico_t*)second->value)->type == AST_TYPE_IDENTIFICATOR) {
-      if(find_item(&outer_table, ((valor_lexico_t*)second->value)->value.stringValue) == NULL) {
+      if(find_item(tables, ((valor_lexico_t*)second->value)->value.stringValue) == NULL) {
         quit(ERR_UNDECLARED, "Not declared type");
       } else {
         type=AST_TYPE_CLASS;
       }
     }
 
-    create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)second->value)->value, 0, 0, is_vector); //TODO: discover last 3 values from tree
+    create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type, NULL), NULL, ((valor_lexico_t*)second->value)->value, 0, 0, is_vector); //TODO: discover last 3 values from tree
   }
 
-  if(add_item(&outer_table, identifier, item) == -1)
+  if(add_item(tables, identifier, item) == -1)
     quit(ERR_DECLARED, "Token already declared");
 }
 
@@ -1239,7 +1343,7 @@ void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector
 
 
   char* identifier = first->value.stringValue;
-  symbol_table_t *st = find_item(&outer_table, identifier);
+  symbol_table_t *st = find_item(tables, identifier);
   
   if( st == NULL) {
     quit(ERR_UNDECLARED, "Identifier not declared");
@@ -1253,7 +1357,7 @@ void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector
     quit(ERR_VECTOR, "This variable is not a vector.");
   }
 
-  symbol_table_t *st_type = find_item(&outer_table, st->item->value.stringValue);
+  symbol_table_t *st_type = find_item(tables, st->item->value.stringValue);
 
   if(st_type == NULL) {
     quit(-1, "Something went terrebly wrong validating fields");

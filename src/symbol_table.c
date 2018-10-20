@@ -1,8 +1,8 @@
-#include "symbol_table.h" 
+#include "symbol_table.h"
 
-int add_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item) {
+int _add_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item) {
 
-  symbol_table_t *aux = find_item(SYMBOL_TABLE, key);
+  symbol_table_t *aux = _find_item(SYMBOL_TABLE, key);
 
   if(aux == NULL) {
     symbol_table_t *st = (symbol_table_t *)malloc(sizeof(symbol_table_t));
@@ -15,9 +15,9 @@ int add_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item
 
 }
 
-int update_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item) {
+int _update_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *item) {
   
-  symbol_table_t *aux = find_item(SYMBOL_TABLE, key);
+  symbol_table_t *aux = _find_item(SYMBOL_TABLE, key);
 
   if(aux != NULL) {
     remove_item(SYMBOL_TABLE, key);
@@ -31,7 +31,7 @@ int update_item(symbol_table_t **SYMBOL_TABLE, char *key, symbol_table_item_t *i
 
 }
 
-symbol_table_t *find_item(symbol_table_t **SYMBOL_TABLE, char *key) {
+symbol_table_t *_find_item(symbol_table_t **SYMBOL_TABLE, char *key) {
 
   symbol_table_t *st;
   HASH_FIND_STR(*SYMBOL_TABLE, key, st);
@@ -65,7 +65,7 @@ void _free_symbol_table_line(symbol_table_t *st) {
 
 
 int remove_item(symbol_table_t **SYMBOL_TABLE, char *key) {
-  symbol_table_t *st = find_item(SYMBOL_TABLE, key);
+  symbol_table_t *st = _find_item(SYMBOL_TABLE, key);
   HASH_DEL(*SYMBOL_TABLE, st);
 
   _free_symbol_table_line(st);
