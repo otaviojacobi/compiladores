@@ -1168,13 +1168,14 @@ token_type_t CheckExpression(tree_node_t *node) {
             }
             params_aux = params_aux->next;
           }
-
           if(!found) {
             quit(ERR_USER,"Unkown field");
           }
-
-
     break;
+
+    case AST_TYPE_FUNCTION_CALL:
+      st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+      return st->item->type;
 
       default: return vl->type;
   }

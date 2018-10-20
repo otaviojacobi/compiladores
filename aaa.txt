@@ -27,6 +27,8 @@ float foo(MC x, const float z){
 
 }
 
+int foo3(int aj) {}
+
 float foo2() {
-    foo(oi, MCg[2]$field1 + b);
+    foo(oi, MCg[2]$field1 + foo3(foo3(b)) + x$field2 + b);
 }
