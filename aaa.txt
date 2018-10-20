@@ -16,5 +16,6 @@ int f(int x, float z){
 
     static const int c <= a;
 
-    b = a + 3;
+    foo();
+    //b = c$oi + 3;
 }

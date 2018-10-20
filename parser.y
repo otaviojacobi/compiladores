@@ -26,6 +26,7 @@
   token_type_t CheckExpression(tree_node_t *node);
   int get_type_size(token_type_t type);
   void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
+  void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector);
 %}
 
 %error-verbose
@@ -211,12 +212,21 @@ identificador_accessor:
 TK_IDENTIFICADOR
 {
   $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1);
+
+  char* identifier = $1->value.stringValue;
+
+  if(find_item(&outer_table, identifier) == NULL) {
+    quit(ERR_UNDECLARED, "Identifier not declared");
+  }
 }
 | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR
 {
   $$ = MakeNode(AST_TYPE_OBJECT, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $3));
+
+  find_in_object($1, $3, 0);
+
 }
 | TK_IDENTIFICADOR '[' expression ']'
 {
@@ -224,10 +234,21 @@ TK_IDENTIFICADOR
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, $3);
 
+  //This should never happen (we have a lexer...), I test anyway....
   token_type_t t = CheckExpression($3);
-
   if(t != AST_TYPE_BOOL && t != AST_TYPE_INT && t != AST_TYPE_FLOAT)
     quit(ERR_VECTOR, "You're trying to access a vector with some invalid type");
+
+  char* identifier = $1->value.stringValue;
+
+  symbol_table_t *st = find_item(&outer_table, identifier);
+  if( st == NULL) {
+    quit(ERR_UNDECLARED, "Identifier not declared");
+  }
+
+  if(st->item->is_vector <= 0) {
+    quit(ERR_VECTOR, "This variable is not a vector.");
+  }
 }
 | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
 {
@@ -238,6 +259,9 @@ TK_IDENTIFICADOR
   $$ = MakeNode(AST_TYPE_OBJECT, NULL);
   InsertChild($$, vector);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $6));
+
+  find_in_object($1, $6, 1);
+
 }
 ;
 
@@ -599,7 +623,7 @@ std_type TK_IDENTIFICADOR {
   }
 
   if(st->item->type == AST_TYPE_CLASS) {
-    quit(ERR_WRONG_TYPE, "Wrong type on assertion");
+    quit(ERR_USER_TO_X, "Wrong type on assertion");
   }
 
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
@@ -650,6 +674,7 @@ std_type TK_IDENTIFICADOR {
 ;
 
 //TODO: ADICIONAR AS INFERENCIAS DE TIPO !!!
+//TODO: CHECAR TIPO DO USUARIO -> NAO FIZ
 attribution: identificador_accessor '=' expression
 {
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
@@ -995,6 +1020,45 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
 
   if(add_item(&outer_table, identifier, item) == -1)
     quit(ERR_DECLARED, "Token already declared");
+}
+
+void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector) {
+
+
+  char* identifier = first->value.stringValue;
+  symbol_table_t *st = find_item(&outer_table, identifier);
+  
+  if( st == NULL) {
+    quit(ERR_UNDECLARED, "Identifier not declared");
+  }
+
+  if(st->item->type != AST_TYPE_CLASS) {
+    quit(ERR_USER, "Can only access user type variables");
+  }
+
+  if(is_vector && (st->item->is_vector <= 0)) {
+    quit(ERR_VECTOR, "This variable is not a vector.");
+  }
+
+  symbol_table_t *st_type = find_item(&outer_table, st->item->value.stringValue);
+
+  if(st_type == NULL) {
+    quit(-1, "Something went terrebly wrong validating fields");
+  }
+
+  int found = 0;
+  arg_list_t *aux = st_type->item->arg_list;
+  while(aux != NULL) {
+    if (strcmp(aux->field_name, second->value.stringValue) == 0) {
+      found = 1;
+      break;
+    }
+    aux = aux->next;
+  }
+
+  if(!found) {
+    quit(ERR_USER, "User Class does not have such property.");
+  }
 }
 
 // symbol_table_t* get_table(void) {
