@@ -27,6 +27,7 @@
   int get_type_size(token_type_t type);
   void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
   void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector);
+  int is_compact(token_type_t t1, token_type_t t2);
 %}
 
 %error-verbose
@@ -426,6 +427,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
             quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
           }
           p_create->type = AST_TYPE_CLASS;
+          p_create->field_name = strdup(st->key);
           aux_value = st->item->value;
         } else {
           p_create->type = ((valor_lexico_t*)aux->first_child->first_child->value)->type;
@@ -440,6 +442,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
           if(st == NULL) {
             quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
           }
+          p_create->field_name = strdup(st->key);
           p_create->type = AST_TYPE_CLASS;
           aux_value = st->item->value;
         } else {
@@ -791,11 +794,97 @@ TK_IDENTIFICADOR '(' args ')'
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, $3);
+
+  symbol_table_t *st = find_item(&outer_table, $1->value.stringValue);
+  symbol_table_t *st_aux = NULL;
+  tree_node_t *node;
+
+  if(st == NULL) {
+    quit(ERR_UNDECLARED, "Variable called is not declared");
+  }
+
+  arg_list_t *params = st->item->arg_list;
+  arg_list_t *params_aux = NULL;
+  token_type_t type;
+  int found;
+
+  //Don't need to check if params exists here because it's checked in identificador_accessor
+  if ( ((valor_lexico_t*)($3->value))->type == AST_TYPE_EXPRESSION_LIST) {
+    node = $3->first_child;
+    while(node != NULL) {
+    
+      token_type_t type = ((valor_lexico_t*)node->value)->type;
+
+      switch(type) {
+        case AST_TYPE_IDENTIFICATOR:
+          st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->value))->value.stringValue);
+          
+          if(!is_compact(st_aux->item->type, params->type)) {
+            quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
+          } else if(st_aux->item->type == AST_TYPE_CLASS && params->type == AST_TYPE_CLASS) {
+            if(strcmp(st_aux->item->value.stringValue, params->field_name) != 0) {
+              quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters on custom objects");
+            }
+          }
+        break;
+
+        case AST_TYPE_OBJECT:
+          if (((valor_lexico_t*)node->first_child->value)->type == AST_TYPE_VECTOR) {
+            st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
+          } else {
+            st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+          }
+          st_aux = find_item(&outer_table, st_aux->item->value.stringValue);
+          params_aux = st_aux->item->arg_list;
+          found = 0;
+          while(params_aux != NULL) {
+
+            if( strcmp (params_aux->field_name, ((valor_lexico_t*)(node->first_child->brother_next->value))->value.stringValue) == 0) {
+              type = params_aux->type;
+              found = 1;
+              break;
+            }
+            params_aux = params_aux->next;
+          }
+          
+          if(!is_compact(type, params->type)) {
+            quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
+          }
+        break;
+
+        case AST_TYPE_VECTOR:
+          st_aux = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+          
+          if(!is_compact(st_aux->item->type, params->type)) {
+            quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
+          } else if(st_aux->item->type == AST_TYPE_CLASS && params->type == AST_TYPE_CLASS) {
+            if(strcmp(st_aux->item->value.stringValue, params->field_name) != 0) {
+              quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters on custom objects");
+            }
+          }
+        break;
+      }
+
+      node = node->brother_next;
+      params = params->next;
+
+      if(params == NULL && node != NULL) {
+        quit(ERR_EXCESS_ARGS, "Too much arguments for function call");
+      }
+    }
+
+    if(params != NULL) {
+      quit(ERR_MISSING_ARGS, "Missing args");
+    }
+  }
+
 }
 | TK_IDENTIFICADOR '(' ')'
 {
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+
+  //TODO!
 };
 
 args: 
@@ -923,13 +1012,13 @@ expression_list ',' expression {
 expression:  
 '(' expression ')'        { $$ = $2; CheckExpression($$); }
 | identificador_accessor  { $$ = $1; CheckExpression($$); }
-| '+' expression          { $$ = $2; CheckExpression($$);}
-| '-' expression          { $$ = MakeNode(AST_TYPE_NEGATIVE, NULL); InsertChild($$, $2); CheckExpression($$);}
-| '!' expression          { $$ = MakeNode(AST_TYPE_NEGATE, NULL); InsertChild($$, $2); CheckExpression($$);}
-| '&' expression          { $$ = MakeNode(AST_TYPE_ADDRESS, NULL); InsertChild($$, $2); CheckExpression($$);}
-| '*' expression          { $$ = MakeNode(AST_TYPE_POINTER, NULL); InsertChild($$, $2); CheckExpression($$);}
-| '?' expression          { $$ = MakeNode(AST_TYPE_QUESTION_MARK, NULL); InsertChild($$, $2); CheckExpression($$);}
-| '#' expression          { $$ = MakeNode(AST_TYPE_HASHTAG, NULL); InsertChild($$, $2); CheckExpression($$);}
+| '+' expression          { $$ = $2; CheckExpression($$);} //TODO
+| '-' expression          { $$ = MakeNode(AST_TYPE_NEGATIVE, NULL); InsertChild($$, $2); CheckExpression($$);} //TODO
+| '!' expression          { $$ = MakeNode(AST_TYPE_NEGATE, NULL); InsertChild($$, $2); CheckExpression($$);} //TODO
+| '&' expression          { $$ = MakeNode(AST_TYPE_ADDRESS, NULL); InsertChild($$, $2); CheckExpression($$);} //TODO
+| '*' expression          { $$ = MakeNode(AST_TYPE_POINTER, NULL); InsertChild($$, $2); CheckExpression($$);} //TODO
+| '?' expression          { $$ = MakeNode(AST_TYPE_QUESTION_MARK, NULL); InsertChild($$, $2); CheckExpression($$);} //TODO
+| '#' expression          { $$ = MakeNode(AST_TYPE_HASHTAG, NULL); InsertChild($$, $2); CheckExpression($$);} //TODO
 | expression '*' expression                 {$$ = MakeNode(AST_TYPE_MUL, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
 | expression '/' expression                 {$$ = MakeNode(AST_TYPE_DIV, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
 | expression '%' expression                 {$$ = MakeNode(AST_TYPE_REST, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
@@ -946,8 +1035,8 @@ expression:
 | expression TK_OC_NE expression            {$$ = MakeNode(AST_TYPE_NE, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
 | expression TK_OC_AND expression           {$$ = MakeNode(AST_TYPE_AND, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
 | expression TK_OC_OR expression            {$$ = MakeNode(AST_TYPE_OR, NULL);InsertChild($$, $1);InsertChild($$, $3); CheckExpression($$);}
-| expression '?' expression ':' expression  {$$ = MakeNode(AST_TYPE_TERNARY, NULL);InsertChild($$, $1);InsertChild($$, $3);InsertChild($$, $5);}
-| pipe_command                              {$$ = $1; CheckExpression($$);}
+| expression '?' expression ':' expression  {$$ = MakeNode(AST_TYPE_TERNARY, NULL);InsertChild($$, $1);InsertChild($$, $3);InsertChild($$, $5);} //TODO
+| pipe_command                              {$$ = $1; CheckExpression($$);} //TODO
 | func_call                                 {$$ = $1; CheckExpression($$);}
 | tk_lit                                    {$$ = $1; CheckExpression($$);}
 ;
@@ -1141,6 +1230,26 @@ void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector
   if(!found) {
     quit(ERR_USER, "User Class does not have such property.");
   }
+}
+
+int is_compact(token_type_t t1, token_type_t t2) {
+  if(t1 == AST_TYPE_INT && t2 == AST_TYPE_INT) return 1;
+  if(t1 == AST_TYPE_INT && t2 == AST_TYPE_BOOL) return 1;
+  if(t1 == AST_TYPE_INT && t2 == AST_TYPE_FLOAT) return 1;
+
+  if(t1 == AST_TYPE_FLOAT && t2 == AST_TYPE_FLOAT) return 1;
+  if(t1 == AST_TYPE_FLOAT && t2 == AST_TYPE_INT) return 1;
+  if(t1 == AST_TYPE_FLOAT && t2 == AST_TYPE_BOOL) return 1;
+  
+  if(t1 == AST_TYPE_BOOL && t2 == AST_TYPE_BOOL) return 1;
+  if(t1 == AST_TYPE_BOOL && t2 == AST_TYPE_INT) return 1;
+  if(t1 == AST_TYPE_BOOL && t2 == AST_TYPE_FLOAT) return 1;
+
+  if(t1 == AST_TYPE_CHAR && t2 == AST_TYPE_CHAR) return 1;
+  if(t1 == AST_TYPE_STRING && t2 == AST_TYPE_STRING) return 1;
+
+  if(t1 == AST_TYPE_CLASS && t2 == AST_TYPE_CLASS) return 1;
+  return 0;
 }
 
 // symbol_table_t* get_table(void) {

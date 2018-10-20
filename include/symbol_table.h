@@ -9,8 +9,8 @@
 typedef struct arg_list {
 
     token_type_t type;
-    char *field_name; //only in case of new type declaration !! don't worry about null printing
-    int protec_level; //only in case of new type declaration !!
+    char *field_name;
+    int protec_level; //only in case of new type declaration !!don't worry about null printing
     struct arg_list *next;
 
 } arg_list_t;

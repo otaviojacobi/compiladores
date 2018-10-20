@@ -5,12 +5,17 @@ class MC [
     protected string field4
 ];
 
+class BB [
+    char bbc
+];
+
 MCg [5] MC;
+haha [10] static int;
 
 
-float foo(const MC x, const float z){
+float foo(MC x, const float z){
     static const float a;
-    int b;
+    float b;
 
 
     static const MC oi;
@@ -19,4 +24,6 @@ float foo(const MC x, const float z){
 
 }
 
-float foo2() {}
+float foo2() {
+    foo(oi, haha[1]);
+}
