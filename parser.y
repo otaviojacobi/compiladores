@@ -25,6 +25,7 @@
   void InsertChild(tree_node_t *father, tree_node_t *children);
   token_type_t CheckExpression(tree_node_t *node);
   int get_type_size(token_type_t type);
+  void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
 %}
 
 %error-verbose
@@ -321,47 +322,7 @@ global_var_decl: TK_IDENTIFICADOR gv_type ';' {
   InsertChild($$, MakeNode(TK_IDENTIFICADOR, $1));
   InsertChild($$, $2);
 
-  char* identifier = $1->value.stringValue, *aux_str;
-  symbol_table_item_t *item = NULL;
-
-  if(find_item(&outer_table, identifier)) {
-    quit(ERR_DECLARED, "Already declared identifier..");
-  }
-
-  token_type_t type = ((valor_lexico_t*)$2->value)->type;
-
-  item = (symbol_table_item_t *)malloc(sizeof(symbol_table_item_t));
-
-  if(type == AST_TYPE_STATIC) {
-    if (((valor_lexico_t*)$2->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
-
-      if(find_item(&outer_table, ((valor_lexico_t*)$2->first_child->value)->value.stringValue) == NULL) {
-        quit(ERR_UNDECLARED, "Not declared type");
-      } else {
-        type=AST_TYPE_CLASS;
-      }
-
-      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)$2->first_child->value)->value, 0, 1, 0); //TODO: discover last 3 values from tree
-    }
-    else {
-      type = ((valor_lexico_t*)$2->first_child->value)->type;
-      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)$2->value)->value, 0, 1, 0); //TODO: discover last 3 values from tree
-    }
-  } else {
-
-    if(((valor_lexico_t*)$2->value)->type == AST_TYPE_IDENTIFICATOR) {
-      if(find_item(&outer_table, ((valor_lexico_t*)$2->value)->value.stringValue) == NULL) {
-        quit(ERR_UNDECLARED, "Not declared type");
-      } else {
-        type=AST_TYPE_CLASS;
-      }
-    }
-
-    create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)$2->value)->value, 0, 0, 0); //TODO: discover last 3 values from tree
-  }
-
-  if(add_item(&outer_table, identifier, item) == -1)
-    quit(ERR_DECLARED, "Token already declared");
+  create_global_value($1, $2, 0);
 
 }
 | TK_IDENTIFICADOR '[' TK_LIT_INT ']' gv_type';' {
@@ -369,6 +330,9 @@ global_var_decl: TK_IDENTIFICADOR gv_type ';' {
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, MakeNode(AST_TYPE_LITERAL_INT, $3));
   InsertChild($$, $5);
+
+  create_global_value($1, $5, $3->value.intValue);
+
 };
 
 gv_type: TK_PR_STATIC std_type { 
@@ -921,6 +885,51 @@ int get_type_size(token_type_t type) {
     case AST_TYPE_CHAR: return 1;
     case AST_TYPE_STRING: return -1; //TOOD: FIXMEEEE
   }
+}
+
+void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector ) {
+  
+  char* identifier = first->value.stringValue, *aux_str;
+  symbol_table_item_t *item = NULL;
+
+  if(find_item(&outer_table, identifier)) {
+    quit(ERR_DECLARED, "Already declared identifier..");
+  }
+
+  token_type_t type = ((valor_lexico_t*)second->value)->type;
+
+  item = (symbol_table_item_t *)malloc(sizeof(symbol_table_item_t));
+
+  if(type == AST_TYPE_STATIC) {
+    if (((valor_lexico_t*)second->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
+
+      if(find_item(&outer_table, ((valor_lexico_t*)second->first_child->value)->value.stringValue) == NULL) {
+        quit(ERR_UNDECLARED, "Not declared type");
+      } else {
+        type=AST_TYPE_CLASS;
+      }
+
+      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)second->first_child->value)->value, 0, 1, is_vector); //TODO: discover last 3 values from tree
+    }
+    else {
+      type = ((valor_lexico_t*)second->first_child->value)->type;
+      create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)second->value)->value, 0, 1, is_vector); //TODO: discover last 3 values from tree
+    }
+  } else {
+
+    if(((valor_lexico_t*)second->value)->type == AST_TYPE_IDENTIFICATOR) {
+      if(find_item(&outer_table, ((valor_lexico_t*)second->value)->value.stringValue) == NULL) {
+        quit(ERR_UNDECLARED, "Not declared type");
+      } else {
+        type=AST_TYPE_CLASS;
+      }
+    }
+
+    create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type), NULL, ((valor_lexico_t*)second->value)->value, 0, 0, is_vector); //TODO: discover last 3 values from tree
+  }
+
+  if(add_item(&outer_table, identifier, item) == -1)
+    quit(ERR_DECLARED, "Token already declared");
 }
 
 // symbol_table_t* get_table(void) {

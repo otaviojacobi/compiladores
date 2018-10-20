@@ -5,7 +5,7 @@ class MC [
     protected string field4
 ];
 
-MCg static MC;
+MCg [5] MC;
 
 
 int f(int x, float z){
