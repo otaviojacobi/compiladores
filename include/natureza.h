@@ -6,3 +6,4 @@
 #define NATUREZA_IDENTIFICADOR      6
 #define NATUREZA_FUNCAO             7
 #define NATUREZA_CLASS              8
+#define NATUREZA_GLOBAL_VAR         9

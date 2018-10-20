@@ -1,9 +1,11 @@
-class BUFF_MY_CLASS [
-	int field1 : 
-    public int field2 :
-	protected char field3 : 
-    private string field4
+class MC [
+    int field1:
+    public float field2:
+    private char field3:
+    protected string field4
 ];
+
+MCg static MC;
 
 
 int f(int x, float z){
