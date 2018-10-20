@@ -14,7 +14,7 @@ haha [10] static float;
 
 Teste MC;
 
-float foo(MC x, const float z){
+static char foo(MC x, const float z){
     static const float a;
     const int b;
 
@@ -27,6 +27,8 @@ float foo(MC x, const float z){
 
 }
 
+float foo3(int aj) {}
+
 float foo2() {
-    foo(oi, MCg[2]$field1 + b);
+    return foo(oi, MCg[2]$field1 + foo3(foo3(b)) + x$field2 + b);
 }
