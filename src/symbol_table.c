@@ -113,7 +113,7 @@ void _print_item(symbol_table_t* t) {
     }
   }
 
-  if(t->item->nature == NATUREZA_GLOBAL_VAR && t->item->type == AST_TYPE_CLASS) {
+  if(t->item->type == AST_TYPE_CLASS && (t->item->nature == NATUREZA_GLOBAL_VAR || t->item->nature == NATUREZA_IDENTIFICADOR)) {
     printf("\tTYPE NAME: %s", t->item->value.stringValue);
   }
 

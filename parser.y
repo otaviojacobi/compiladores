@@ -559,7 +559,7 @@ std_type TK_IDENTIFICADOR {
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0); //TODO: discover last 3 values from tree
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0);
   if(add_item(&outer_table, value.stringValue, item) == -1)
     quit(ERR_DECLARED, "Token already declared");
 
@@ -568,6 +568,20 @@ std_type TK_IDENTIFICADOR {
   $$ = MakeNode(AST_TYPE_DECLR, NULL); 
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+
+  token_value_t value = $1->value;
+  char *identifier = ((valor_lexico_t*)$2)->value.stringValue;
+
+  if(find_item(&outer_table, value.stringValue) == NULL) {
+    quit(ERR_UNDECLARED, "Token type not declared");
+  }
+
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, AST_TYPE_CLASS,-1,NULL, value, 0, 0, 0); //TODO: DISCOVER REAL SIZE
+  if(add_item(&outer_table, identifier, item) == -1)
+    quit(ERR_DECLARED, "Token already declared!");
+
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR
 {
@@ -575,6 +589,34 @@ std_type TK_IDENTIFICADOR {
   InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $4));
+
+  char *identifier = ((valor_lexico_t*)$2)->value.stringValue;
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+
+  symbol_table_t *st = find_item (&outer_table, ((valor_lexico_t*)$4)->value.stringValue);
+  if( st == NULL ) {
+    quit(ERR_UNDECLARED, "Not declared variable on assignement");
+  }
+
+  if(st->item->type == AST_TYPE_CLASS) {
+    quit(ERR_WRONG_TYPE, "Wrong type on assertion");
+  }
+
+  token_type_t type = ((valor_lexico_t*)$1->value)->type;
+  token_type_t incoming_type = st->item->type;
+
+  if( (type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
+      (type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) )
+    quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
+
+  if ( (type == AST_TYPE_CHAR && incoming_type != AST_TYPE_CHAR) ||
+       (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) )
+    quit(ERR_CHAR_TO_X, "Chars can't be implicit casted.");
+
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type), NULL, $2->value, 0, 0, 0); //TODO: SIZEE
+  if(add_item(&outer_table, identifier, item) == -1)
+    quit(ERR_DECLARED, "Token already declaredd");
+
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE tk_lit
 {
@@ -582,9 +624,32 @@ std_type TK_IDENTIFICADOR {
   InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $4);
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  token_value_t value = ((valor_lexico_t*)$2)->value;  
+  token_type_t type = ((valor_lexico_t*)$1->value)->type;
+  
+  token_type_t incoming_type = ((valor_lexico_t*)$4->value)->type;
+
+  if((type == AST_TYPE_STRING && incoming_type != AST_TYPE_LITERAL_STRING) ||
+     (type != AST_TYPE_STRING && incoming_type == AST_TYPE_LITERAL_STRING) )
+    quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
+
+  if((type == AST_TYPE_CHAR && incoming_type != AST_TYPE_LITERAL_CHAR) ||
+     (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_LITERAL_CHAR) )
+    quit(ERR_CHAR_TO_X, "chars can't be implicit casted.");
+
+  //All others can be implicit cast between themselves...
+
+  char* identifier = value.stringValue;
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type),NULL, value, 0, 0, 0); //TODO: SIZEE
+  if(add_item(&outer_table, identifier, item) == -1)
+    quit(ERR_DECLARED, "Token already declared");
+
 }
 ;
 
+//TODO: ADICIONAR AS INFERENCIAS DE TIPO !!!
 attribution: identificador_accessor '=' expression
 {
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
@@ -592,21 +657,21 @@ attribution: identificador_accessor '=' expression
   InsertChild($$, $3);
   
   token_type_t exp_type = CheckExpression($3);
-  token_type_t ident_type;
+  token_type_t incoming_type;
 
   symbol_table_t *t = find_item(&outer_table, ((valor_lexico_t *)$1->value)->value.stringValue);
   if(t != NULL) {
-    ident_type = ((symbol_table_item_t *)t->item)->type;
+    incoming_type = ((symbol_table_item_t *)t->item)->type;
   }
 
-  if( (exp_type == AST_TYPE_STRING && ident_type != AST_TYPE_STRING) ||
-      (exp_type != AST_TYPE_STRING && ident_type == AST_TYPE_STRING) )
+  if( (exp_type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
+      (exp_type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) )
     quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
 
-  if ( (exp_type == AST_TYPE_CHAR && ident_type != AST_TYPE_CHAR) ||
-       (exp_type != AST_TYPE_CHAR && ident_type == AST_TYPE_CHAR) )
+  if ( (exp_type == AST_TYPE_CHAR && incoming_type != AST_TYPE_CHAR) ||
+       (exp_type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) )
     quit(ERR_CHAR_TO_X, "Chars can't be implicit casted.");
-    
+
 }
 ;
 

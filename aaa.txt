@@ -12,5 +12,9 @@ int f(int x, float z){
     static const float a;
     int b;
 
+    static const MC oi;
+
+    static const int c <= a;
+
     b = a + 3;
 }
