@@ -8,14 +8,15 @@ class MC [
 MCg [5] MC;
 
 
-int f(int x, float z){
+float foo(const MC x, const float z){
     static const float a;
     int b;
+
 
     static const MC oi;
 
     static const int c <= a;
 
-    foo();
-    //b = c$oi + 3;
 }
+
+float foo2() {}

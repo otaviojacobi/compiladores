@@ -389,6 +389,88 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   InsertChild($$, $1);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
   InsertChild($$, $3);
+
+  char *identifier =  $2->value.stringValue;
+
+  symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  symbol_table_item_t *aux_item = NULL;
+  symbol_table_t *st = NULL;
+
+
+  token_type_t type = ((valor_lexico_t*)($1->value))->type;
+  token_value_t value = $2->value;
+
+
+  arg_list_t *params = NULL, *p_create = NULL, *p_last = NULL;
+  tree_node_t *aux = $3;
+  token_type_t aux_type;
+  token_value_t aux_value;
+
+  int counter = 0;
+  int is_const;
+  char *param_name;
+
+  if(aux != NULL) {
+    aux = aux->first_child;
+    while(aux != NULL) {
+
+      p_create = (arg_list_t*)malloc(sizeof(arg_list_t));
+      aux_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+      
+      if (((valor_lexico_t*)aux->value)->type == AST_TYPE_CONST) {
+        is_const = 1;
+
+        if(((valor_lexico_t*)aux->first_child->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
+          st = find_item(&outer_table, ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue);
+          if(st == NULL) {
+            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+          }
+          p_create->type = AST_TYPE_CLASS;
+          aux_value = st->item->value;
+        } else {
+          p_create->type = ((valor_lexico_t*)aux->first_child->first_child->value)->type;
+          aux_value = ((valor_lexico_t*)aux->first_child->first_child->brother_next->value)->value;
+        }
+        param_name=((valor_lexico_t*)aux->first_child->first_child->brother_next->value)->value.stringValue;
+      } else {
+        is_const = 0;
+
+        if(((valor_lexico_t*)aux->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
+          st = find_item(&outer_table, ((valor_lexico_t*)aux->first_child->value)->value.stringValue);
+          if(st == NULL) {
+            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+          }
+          p_create->type = AST_TYPE_CLASS;
+          aux_value = st->item->value;
+        } else {
+          p_create->type = ((valor_lexico_t*)aux->first_child->value)->type;
+          aux_value = ((valor_lexico_t*)aux->first_child->brother_next->value)->value;
+        }
+        param_name=((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue;
+      }
+      aux_type = p_create->type;
+
+      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type),NULL, aux_value, is_const, 0, 0);
+
+      if(add_item(&outer_table, param_name, aux_item) == -1)
+          quit(ERR_DECLARED, "Token already declared");
+
+      if(counter == 0) {
+        params = p_create;
+      } else {
+        p_last->next = p_create;
+      }
+      p_last = p_create;
+
+      aux = aux->brother_next;
+      counter++;
+    }
+  }
+
+  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type),params, value, 0, 0, 0);
+  if(add_item(&outer_table, value.stringValue, item) == -1)
+    quit(ERR_DECLARED, "Token already declared");
+
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
 {
