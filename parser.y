@@ -1070,7 +1070,10 @@ token_type_t CheckExpression(tree_node_t *node) {
   valor_lexico_t *vl = node->value;
   token_type_t first_type;
   token_type_t second_type;
-  symbol_table_t *t;
+  symbol_table_t *st;
+  arg_list_t *params_aux;
+  int found;
+  token_type_t type;
 
   switch(vl->type) {
     case AST_TYPE_LITERAL_CHAR: return AST_TYPE_CHAR; break;
@@ -1104,7 +1107,7 @@ token_type_t CheckExpression(tree_node_t *node) {
     case AST_TYPE_DIV:
       first_type = CheckExpression(node->first_child);
       second_type = CheckExpression(node->first_child->brother_next);
-        
+      
       if(first_type == AST_TYPE_BOOL && second_type == AST_TYPE_BOOL)
         return AST_TYPE_BOOL;
 
@@ -1121,20 +1124,59 @@ token_type_t CheckExpression(tree_node_t *node) {
         return AST_TYPE_FLOAT;
 
 
-      quit(ERR_WRONG_TYPE, "Wrong type.");
+      quit(ERR_WRONG_TYPE, "Wrong type 2.");
       break;
 
     case AST_TYPE_IDENTIFICATOR:
 
-      t = find_item(&outer_table, ((valor_lexico_t *)node->value)->value.stringValue);
-      if(t != NULL) {
-        return ((symbol_table_item_t *)t->item)->type;
+      st = find_item(&outer_table, ((valor_lexico_t *)node->value)->value.stringValue);
+      if(st != NULL) {
+        return ((symbol_table_item_t *)st->item)->type;
       }
       else {
         quit(ERR_UNDECLARED, "Not declared\n");
       }
 
       break;
+
+    case AST_TYPE_VECTOR:
+          st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+          if(st == NULL)
+            quit(ERR_UNDECLARED, "Not declared variable");
+          return st->item->type;
+    break;
+    case AST_TYPE_OBJECT:
+
+          if (((valor_lexico_t*)node->first_child->value)->type == AST_TYPE_VECTOR) {
+            st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
+          } else {
+            st = find_item(&outer_table, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+          }
+          if(st == NULL)
+            quit(ERR_UNDECLARED, "Not declared variable");
+          st = find_item(&outer_table, st->item->value.stringValue);
+          
+          params_aux = st->item->arg_list;
+          found = 0;
+          while(params_aux != NULL) {
+
+            if( strcmp (params_aux->field_name, ((valor_lexico_t*)(node->first_child->brother_next->value))->value.stringValue) == 0) {
+              type = params_aux->type;
+              found = 1;
+              return type;
+              break;
+            }
+            params_aux = params_aux->next;
+          }
+
+          if(!found) {
+            quit(ERR_USER,"Unkown field");
+          }
+
+
+    break;
+
+      default: return vl->type;
   }
 }
 

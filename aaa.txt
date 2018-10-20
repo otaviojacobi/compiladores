@@ -10,20 +10,23 @@ class BB [
 ];
 
 MCg [5] MC;
-haha [10] static int;
+haha [10] static float;
 
+Teste MC;
 
 float foo(MC x, const float z){
     static const float a;
-    float b;
+    const int b;
 
 
     static const MC oi;
 
     static const int c <= a;
 
+    b = a + b;
+
 }
 
 float foo2() {
-    foo(oi, haha[1]);
+    foo(oi, MCg[2]$field1 + b);
 }
