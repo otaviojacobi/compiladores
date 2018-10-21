@@ -1,5 +1,4 @@
 o código ta um locura, tenta abstrair o que der.
-tem só uma tabela acho que  (Senao a coisa mais importante) é implementar o escopo, com mais de uma tabela
 
 Tem varias coisas, especialmente os checks se ja existe, se os tipos estao corretos etc etc
 

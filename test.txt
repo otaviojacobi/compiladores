@@ -12,6 +12,8 @@ return x+1;
 
 STRUCT_TYPE make_struct(int b, string c){
 	STRUCT_TYPE struct;
-	struct$b = b;
+	struct$b = 10.5; // depois colocar + b
 	struct$c = c;
+
+	return 10;
 }

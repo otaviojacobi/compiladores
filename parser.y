@@ -9,6 +9,9 @@
 }
 
 %{
+  #define ERROR_MESSAGE_MAX_LENGTH 200
+  #define str(x) #x
+  #define xstr(x) str(x)
   #include "tree.h"
   #include "stack.h"
   #include "err.h"
@@ -19,6 +22,10 @@
   extern stack_node_t *tables;
   extern symbol_table_t *outer_table;
   symbol_table_t *inner_scope;
+  char err_msg[ERROR_MESSAGE_MAX_LENGTH];
+  token_type_t return_type;
+  char *func_return_type_name;
+
 
   int yylex(void);
   void yyerror (char const *s);
@@ -30,6 +37,7 @@
   void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
   void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector);
   int is_compact(token_type_t t1, token_type_t t2);
+  const char* type_to_str(token_type_t tkn);
 %}
 
 %error-verbose
@@ -219,7 +227,8 @@ TK_IDENTIFICADOR
   char* identifier = $1->value.stringValue;
 
   if(find_item(tables, identifier) == NULL) {
-    quit(ERR_UNDECLARED, "Identifier not declared");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", identifier, "has not been declared");
+    quit(ERR_UNDECLARED, err_msg);
   }
 }
 | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR
@@ -239,18 +248,23 @@ TK_IDENTIFICADOR
 
   //This should never happen (we have a lexer...), I test anyway....
   token_type_t t = CheckExpression($3);
-  if(t != AST_TYPE_BOOL && t != AST_TYPE_INT && t != AST_TYPE_FLOAT)
-    quit(ERR_VECTOR, "You're trying to access a vector with some invalid type");
+  if(t != AST_TYPE_BOOL && t != AST_TYPE_INT && t != AST_TYPE_FLOAT){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"You're trying to access a vector with some invalid type");
+    quit(ERR_VECTOR, err_msg);
+  }
+
 
   char* identifier = $1->value.stringValue;
 
   symbol_table_t *st = find_item(tables, identifier);
   if( st == NULL) {
-    quit(ERR_UNDECLARED, "Identifier not declared");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", identifier, "has not been declared");
+    quit(ERR_UNDECLARED, err_msg);
   }
 
   if(st->item->is_vector <= 0) {
-    quit(ERR_VECTOR, "This variable is not a vector.");
+    sprintf(err_msg, "line %d: %s %s\n", get_line_number(), identifier, "is not a vector");
+    quit(ERR_VECTOR, err_msg);
   }
 }
 | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
@@ -276,7 +290,8 @@ new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
   char* identifier = $2->value.stringValue, *aux_str;
 
   if(find_item(tables, identifier)) {
-    quit(ERR_DECLARED, "Already declared identifier..");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
   }
 
   symbol_table_item_t* item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
@@ -313,10 +328,17 @@ new_type_decl: TK_PR_CLASS TK_IDENTIFICADOR '[' field_list ']' ';' {
     counter++;
   }
 
-  create_table_item(item, get_line_number(), NATUREZA_CLASS, AST_TYPE_CLASS,-1, params,$2->value, 0, 0, 0); //TODO: SIZEEEEE
-  if(add_item(tables, identifier, item) == -1)
-    quit(ERR_DECLARED, "Already declared identifier.");
-
+  tree_node_t *child = $4->first_child;
+  int __acc_size_struct=0;
+  for(; child != NULL; child = child->brother_next){
+    valor_lexico_t* __field_data = (valor_lexico_t*) child->first_child->value;
+    __acc_size_struct+=get_type_size(__field_data->type, NULL);
+  }
+  create_table_item(item, get_line_number(), NATUREZA_CLASS, AST_TYPE_CLASS,__acc_size_struct, params,$2->value, 0, 0, 0);
+  if(add_item(tables, identifier, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+  }
 
 };
 field_list: field_list ':' field 
@@ -377,6 +399,19 @@ func: func_head command_block {
   $$ = MakeNode(AST_TYPE_FUNCTION, NULL); 
   InsertChild($$, $1); 
   InsertChild($$, $2); 
+  token_type_t type = ((valor_lexico_t*)$1->first_child->value)->type;
+  
+  if(return_type == AST_TYPE_CLASS && type == AST_TYPE_IDENTIFICATOR){
+    if(strcmp(((valor_lexico_t*) $1->first_child->value)->value.stringValue, func_return_type_name) != 0){
+      sprintf(err_msg, "line %d: %s %s, %s %s\n", get_line_number(),"Returning type", func_return_type_name,"but function is of type", ((valor_lexico_t*) $1->first_child->value)->value.stringValue);
+      quit(ERR_WRONG_PAR_RETURN, err_msg);
+    }else
+      type = return_type;
+  }
+  if(type != return_type){
+    sprintf(err_msg, "line %d: %s %s, %s %s\n", get_line_number(),"Returning type", type_to_str(return_type),"but function is of type", type_to_str(type));
+    quit(ERR_WRONG_PAR_RETURN, err_msg);
+  }
   pop(&tables);
 }
 | TK_PR_STATIC func_head command_block {
@@ -440,7 +475,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
         if(((valor_lexico_t*)aux->first_child->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
           st = find_item(tables, ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue);
           if(st == NULL) {
-            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+            sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter type", ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue, "is not declared");
+            quit(ERR_UNDECLARED, err_msg);
           }
           p_create->type = AST_TYPE_CLASS;
           p_create->field_name = strdup(st->key);
@@ -456,7 +492,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
         if(((valor_lexico_t*)aux->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
           st = find_item(tables, ((valor_lexico_t*)aux->first_child->value)->value.stringValue);
           if(st == NULL) {
-            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+            sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter", ((valor_lexico_t*)aux->first_child->value)->value.stringValue, "is not declared");
+            quit(ERR_UNDECLARED, err_msg);
           }
           p_create->field_name = strdup(st->key);
           p_create->type = AST_TYPE_CLASS;
@@ -469,10 +506,12 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       }
       aux_type = p_create->type;
 
-      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, NULL),NULL, aux_value, is_const, 0, 0);
+      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, aux_value.stringValue),NULL, aux_value, is_const, 0, 0);
 
-      if(add_item(tables, param_name, aux_item) == -1)
-          quit(ERR_DECLARED, "Token already declared");
+      if(add_item(tables, param_name, aux_item) == -1){
+        sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter", param_name, "has already been declared");
+        quit(ERR_DECLARED, err_msg);
+      }
 
       if(counter == 0) {
         params = p_create;
@@ -486,9 +525,11 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
     }
   }
 
-  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type, NULL),params, value, 0, 0, 0);
-  if(add_item(tables->next, value.stringValue, item) == -1)
-    quit(ERR_DECLARED, "Token already declared");
+  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type, value.stringValue),params, value, 0, 0, 0);
+  if(add_item(tables->next, value.stringValue, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", value.stringValue, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+  }
 
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR param_list
@@ -506,7 +547,6 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
 
 
   token_type_t type = AST_TYPE_IDENTIFICATOR;
-  char* type_name = $1->value.stringValue;
   token_value_t value = $2->value;
 
   new_scope(&tables, &inner_scope);
@@ -533,7 +573,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
         if(((valor_lexico_t*)aux->first_child->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
           st = find_item(tables, ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue);
           if(st == NULL) {
-            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+            sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter type", ((valor_lexico_t*)aux->first_child->first_child->value)->value.stringValue, "is not declared");
+            quit(ERR_UNDECLARED, err_msg);
           }
           p_create->type = AST_TYPE_CLASS;
           p_create->field_name = strdup(st->key);
@@ -549,7 +590,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
         if(((valor_lexico_t*)aux->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
           st = find_item(tables, ((valor_lexico_t*)aux->first_child->value)->value.stringValue);
           if(st == NULL) {
-            quit(ERR_UNDECLARED, "This parameter type doesn't exist.");
+            sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter type", ((valor_lexico_t*)aux->first_child->value)->value.stringValue, "is not declared");
+            quit(ERR_UNDECLARED, err_msg);
           }
           p_create->field_name = strdup(st->key);
           p_create->type = AST_TYPE_CLASS;
@@ -562,11 +604,14 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       }
       aux_type = p_create->type;
 
-      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, NULL),NULL, aux_value, is_const, 0, 0);
+      create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, aux_value.stringValue),NULL, aux_value, is_const, 0, 0);
 
-      if(add_item(tables, param_name, aux_item) == -1)
-          quit(ERR_DECLARED, "Token already declared");
+      if(add_item(tables, param_name, aux_item) == -1){
+        sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter", param_name, "has already been declared");
+        quit(ERR_DECLARED, err_msg);
 
+      }
+      
       if(counter == 0) {
         params = p_create;
       } else {
@@ -579,9 +624,12 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
     }
   }
 
-  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type, type_name),params, value, 0, 0, 0);
-  if(add_item(tables->next, value.stringValue, item) == -1)
-    quit(ERR_DECLARED, "Token already declared");
+  create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, 0,params, value, 0, 0, 0);
+  if(add_item(tables->next, value.stringValue, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Function", value.stringValue, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+
+  }
 
 };
 
@@ -757,7 +805,7 @@ local_var_static_consumed: TK_PR_CONST local_var_const_consumed {
   memcpy(item, aux->item, sizeof(symbol_table_item_t));
   item->is_const = 1;
 
-  if(_update_item(&outer_table, identifier, item) == -1)
+  if(update_item(tables, identifier, item) == -1)
     quit(-1, "Something went terrebly wrong in local_var_static_consumed...");
 
 }
@@ -775,9 +823,11 @@ std_type TK_IDENTIFICADOR {
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, NULL),NULL, value, 0, 0, 0);
-  if(add_item(tables, value.stringValue, item) == -1)
-    quit(ERR_DECLARED, "Token already declared");
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
+  if(add_item(tables, value.stringValue, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", value.stringValue, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+  }
 
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR { 
@@ -791,12 +841,18 @@ std_type TK_IDENTIFICADOR {
   char *identifier = ((valor_lexico_t*)$2)->value.stringValue;
 
   if(find_item(tables, value.stringValue) == NULL) {
-    quit(ERR_UNDECLARED, "Token type not declared");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identifier", value.stringValue, "is not declared");
+    quit(ERR_UNDECLARED, err_msg);
   }
 
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, AST_TYPE_CLASS,-1,NULL, value, 0, 0, 0); //TODO: DISCOVER REAL SIZE
-  if(add_item(tables, identifier, item) == -1)
-    quit(ERR_DECLARED, "Token already declared!");
+
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, AST_TYPE_CLASS,get_type_size(AST_TYPE_IDENTIFICATOR, value.stringValue),NULL, value, 0, 0, 0); 
+  if(add_item(tables, identifier, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+
+  }
+
 
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE TK_IDENTIFICADOR
@@ -810,28 +866,36 @@ std_type TK_IDENTIFICADOR {
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
 
   symbol_table_t *st = find_item(tables, ((valor_lexico_t*)$4)->value.stringValue);
-  if( st == NULL ) {
-    quit(ERR_UNDECLARED, "Not declared variable on assignement");
+  if( st == NULL ) {        
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", ((valor_lexico_t*)$4)->value.stringValue, "is not declared");
+    quit(ERR_UNDECLARED, err_msg);
   }
 
   if(st->item->type == AST_TYPE_CLASS) {
-    quit(ERR_USER_TO_X, "Wrong type on assertion");
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Wrong type on assertion");
+    quit(ERR_USER_TO_X, err_msg);
   }
 
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
   token_type_t incoming_type = st->item->type;
 
   if( (type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
-      (type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) )
-    quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
+      (type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) ){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.");quit(ERR_STRING_TO_X, err_msg);
+  }
 
   if ( (type == AST_TYPE_CHAR && incoming_type != AST_TYPE_CHAR) ||
-       (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) )
-    quit(ERR_CHAR_TO_X, "Chars can't be implicit casted.");
+       (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) ){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Char can't be implicitly converted.");
+    quit(ERR_CHAR_TO_X, err_msg);
+  }
 
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, NULL), NULL, $2->value, 0, 0, 0); //TODO: SIZEE
-  if(add_item(tables, identifier, item) == -1)
-    quit(ERR_DECLARED, "Token already declaredd");
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, $2->value.stringValue), NULL, $2->value, 0, 0, 0);
+  if(add_item(tables, identifier, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+
+  }
 
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE tk_lit
@@ -848,19 +912,25 @@ std_type TK_IDENTIFICADOR {
   token_type_t incoming_type = ((valor_lexico_t*)$4->value)->type;
 
   if((type == AST_TYPE_STRING && incoming_type != AST_TYPE_LITERAL_STRING) ||
-     (type != AST_TYPE_STRING && incoming_type == AST_TYPE_LITERAL_STRING) )
-    quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
+     (type != AST_TYPE_STRING && incoming_type == AST_TYPE_LITERAL_STRING) ){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.");
+    quit(ERR_STRING_TO_X, err_msg);
+  }
 
   if((type == AST_TYPE_CHAR && incoming_type != AST_TYPE_LITERAL_CHAR) ||
-     (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_LITERAL_CHAR) )
-    quit(ERR_CHAR_TO_X, "chars can't be implicit casted.");
+     (type != AST_TYPE_CHAR && incoming_type == AST_TYPE_LITERAL_CHAR) ){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Char can't be implicitly converted.");
+    quit(ERR_CHAR_TO_X, err_msg);
+  }
 
   //All others can be implicit cast between themselves...
 
   char* identifier = value.stringValue;
-  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, NULL),NULL, value, 0, 0, 0); //TODO: SIZEE
-  if(add_item(tables, identifier, item) == -1)
-    quit(ERR_DECLARED, "Token already declared");
+  create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
+  if(add_item(tables, identifier, item) == -1){
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
+  }
 
 }
 ;
@@ -873,6 +943,8 @@ attribution: identificador_accessor '=' expression
   InsertChild($$, $1);
   InsertChild($$, $3);
   
+  tree_node_t * exprr = $3;
+
   token_type_t exp_type = CheckExpression($3);
   token_type_t incoming_type;
   symbol_table_t *t = find_item(tables, ((valor_lexico_t *)$1->first_child->value)->value.stringValue);
@@ -889,18 +961,25 @@ attribution: identificador_accessor '=' expression
   }
 
   if( (exp_type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
-      (exp_type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) )
-    quit(ERR_STRING_TO_X, "Strings can't be implicit casted.");
+      (exp_type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) ){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.");
+    quit(ERR_STRING_TO_X, err_msg);
+  }
 
   if ( (exp_type == AST_TYPE_CHAR && incoming_type != AST_TYPE_CHAR) ||
-       (exp_type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) )
-    quit(ERR_CHAR_TO_X, "Chars can't be implicit casted.");
+       (exp_type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) ){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Char can't be implicitly converted.");
+    quit(ERR_CHAR_TO_X, err_msg);
+  }
 
+
+  if(exp_type != incoming_type && exp_type == AST_TYPE_FLOAT || exp_type == AST_TYPE_INT || exp_type == AST_TYPE_BOOL && incoming_type == AST_TYPE_FLOAT || incoming_type == AST_TYPE_INT || incoming_type == AST_TYPE_BOOL)
+    $$->implicit_conversion = incoming_type;
 }
 ;
 
 input: TK_PR_INPUT expression         {$$ = MakeNode(AST_TYPE_INPUT, NULL); InsertChild($$, $2);};
-output: TK_PR_OUTPUT expression_list  {$$ = MakeNode(AST_TYPE_OUTPUT, NULL); InsertChild($$, $2);};
+output: TK_PR_OUTPUT expression_list  {$$ = MakeNode(AST_TYPE_OUTPUT, NULL); InsertChild($$, $2); };
 
 func_call: 
 TK_IDENTIFICADOR '(' args ')'
@@ -914,7 +993,8 @@ TK_IDENTIFICADOR '(' args ')'
   tree_node_t *node;
 
   if(st == NULL) {
-    quit(ERR_UNDECLARED, "Variable called is not declared");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", $1->value.stringValue, "is not declared");
+    quit(ERR_UNDECLARED, err_msg);
   }
 
   arg_list_t *params = st->item->arg_list;
@@ -934,10 +1014,12 @@ TK_IDENTIFICADOR '(' args ')'
           st_aux = find_item(tables, ((valor_lexico_t*)(node->value))->value.stringValue);
           
           if(!is_compact(st_aux->item->type, params->type)) {
-            quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
+            sprintf(err_msg, "line %d: %s\n", get_line_number(),"Incompatible parameters");
+            quit(ERR_WRONG_TYPE_ARGS, err_msg);
           } else if(st_aux->item->type == AST_TYPE_CLASS && params->type == AST_TYPE_CLASS) {
             if(strcmp(st_aux->item->value.stringValue, params->field_name) != 0) {
-              quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters on custom objects");
+              sprintf(err_msg, "line %d: %s\n", get_line_number(),"Incompatible parameters on custom objects");
+              quit(ERR_WRONG_TYPE_ARGS, err_msg);
             }
           }
         break;
@@ -962,7 +1044,8 @@ TK_IDENTIFICADOR '(' args ')'
           }
           
           if(!is_compact(type, params->type)) {
-            quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
+            sprintf(err_msg, "line %d: %s\n", get_line_number(),"Incompatible parameters");
+            quit(ERR_WRONG_TYPE_ARGS, err_msg);
           }
         break;
 
@@ -970,10 +1053,12 @@ TK_IDENTIFICADOR '(' args ')'
           st_aux = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
           
           if(!is_compact(st_aux->item->type, params->type)) {
-            quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters");
+            sprintf(err_msg, "line %d: %s\n", get_line_number(),"Incompatible parameters");
+            quit(ERR_WRONG_TYPE_ARGS, err_msg);
           } else if(st_aux->item->type == AST_TYPE_CLASS && params->type == AST_TYPE_CLASS) {
             if(strcmp(st_aux->item->value.stringValue, params->field_name) != 0) {
-              quit(ERR_WRONG_TYPE_ARGS, "Incompactible parameters on custom objects");
+              sprintf(err_msg, "line %d: %s\n", get_line_number(),"Incompatible parameters on custom objects");
+              quit(ERR_WRONG_TYPE_ARGS, err_msg);
             }
           }
         break;
@@ -983,12 +1068,14 @@ TK_IDENTIFICADOR '(' args ')'
       params = params->next;
 
       if(params == NULL && node != NULL) {
-        quit(ERR_EXCESS_ARGS, "Too much arguments for function call");
+        sprintf(err_msg, "line %d: %s\n", get_line_number(),"Too many arguments on function call");
+        quit(ERR_EXCESS_ARGS, err_msg);
       }
     }
 
     if(params != NULL) {
-      quit(ERR_MISSING_ARGS, "Missing args");
+      sprintf(err_msg, "line %d: %s\n", get_line_number(),"Missing arguments on function call");
+      quit(ERR_MISSING_ARGS, err_msg);
     }
   }
 
@@ -1031,14 +1118,13 @@ identificador_accessor TK_OC_SL expression
 return: TK_PR_RETURN expression {
   $$ = MakeNode(AST_TYPE_RETURN, NULL); 
   InsertChild($$, $2);
-
+  tree_node_t * test = $$;
+  tree_node_t * test2 = $2;
   token_type_t type = CheckExpression($$);
 
-  if(type == AST_TYPE_CLASS) {
-    quit(ERR_WRONG_PAR_RETURN, "Can't return custom class");
-  }
-
-  //TODO: how do we find the function which this return belongs to Oo ?
+  return_type=type;
+  if(return_type == AST_TYPE_CLASS)
+    func_return_type_name=find_item(tables, ((valor_lexico_t*)$2->value)->value.stringValue)->item->value.stringValue;
 };
 
 conditional_command: 
@@ -1199,7 +1285,7 @@ token_type_t CheckExpression(tree_node_t *node) {
   arg_list_t *params_aux;
   int found;
   token_type_t type;
-
+  char *name;
   switch(vl->type) {
     case AST_TYPE_LITERAL_CHAR: return AST_TYPE_CHAR; break;
     case AST_TYPE_LITERAL_BOOL: return AST_TYPE_BOOL; break;
@@ -1222,7 +1308,8 @@ token_type_t CheckExpression(tree_node_t *node) {
       if( (first_type  == AST_TYPE_INT || first_type ==  AST_TYPE_FLOAT || first_type  == AST_TYPE_BOOL) && 
           (second_type == AST_TYPE_INT || second_type == AST_TYPE_FLOAT || second_type == AST_TYPE_BOOL) )
         return AST_TYPE_BOOL;
-      quit(ERR_WRONG_TYPE, "Wrong type.");
+      sprintf(err_msg, "line %d: %s\n", get_line_number(), "Wrong type.");
+      quit(ERR_WRONG_TYPE, err_msg);
       break;
 
     case AST_TYPE_MUL:
@@ -1248,8 +1335,8 @@ token_type_t CheckExpression(tree_node_t *node) {
           (first_type == AST_TYPE_FLOAT && second_type == AST_TYPE_INT) )
         return AST_TYPE_FLOAT;
 
-
-      quit(ERR_WRONG_TYPE, "Wrong type 2.");
+      sprintf(err_msg, "line %d: %s\n", get_line_number(), "Wrong type 2.");
+      quit(ERR_WRONG_TYPE, err_msg);
       break;
 
     case AST_TYPE_IDENTIFICATOR:
@@ -1259,26 +1346,32 @@ token_type_t CheckExpression(tree_node_t *node) {
         return ((symbol_table_item_t *)st->item)->type;
       }
       else {
-        quit(ERR_UNDECLARED, "Not declared\n");
+        sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", ((valor_lexico_t *)node->value)->value.stringValue, "is not declared");
+        quit(ERR_UNDECLARED, err_msg);
       }
 
       break;
 
     case AST_TYPE_VECTOR:
           st = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
-          if(st == NULL)
-            quit(ERR_UNDECLARED, "Not declared variable");
+          if(st == NULL){
+            sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", ((valor_lexico_t*)(node->first_child->value))->value.stringValue, "is not declared");
+            quit(ERR_UNDECLARED, err_msg);
+          }
           return st->item->type;
     break;
     case AST_TYPE_OBJECT:
-
           if (((valor_lexico_t*)node->first_child->value)->type == AST_TYPE_VECTOR) {
-            st = find_item(tables, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
+            name=((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue;
+            st = find_item(tables, name);
           } else {
-            st = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
+            name = ((valor_lexico_t*)(node->first_child->value))->value.stringValue;
+            st = find_item(tables, name);
           }
-          if(st == NULL)
-            quit(ERR_UNDECLARED, "Not declared variable");
+          if(st == NULL){
+            sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", name, "is not declared");
+            quit(ERR_UNDECLARED, err_msg);
+          }
           st = find_item(tables, st->item->value.stringValue);
           
           params_aux = st->item->arg_list;
@@ -1294,7 +1387,8 @@ token_type_t CheckExpression(tree_node_t *node) {
             params_aux = params_aux->next;
           }
           if(!found) {
-            quit(ERR_USER,"Unkown field");
+            sprintf(err_msg, "line %d: %s\n", get_line_number(),"Unknown field");
+            quit(ERR_USER, err_msg);
           }
     break;
 
@@ -1316,8 +1410,8 @@ int get_type_size(token_type_t type, char* name) {
     case AST_TYPE_FLOAT: return 8;
     case AST_TYPE_BOOL: return 1;
     case AST_TYPE_CHAR: return 1;
-    case AST_TYPE_STRING: return -1; //TODO: FIXMEEEE
-    case AST_TYPE_IDENTIFICATOR: if(name == NULL) printf("Erro: get_type_size AST_TYPE_IDENTIFICATOR sem nome do identificador"); else return find_item(tables, name)->item->type_size;
+    case AST_TYPE_STRING: return 0; //TODO: FIXMEEEE
+    case AST_TYPE_IDENTIFICATOR: if(name == NULL) printf("ProgrammingError: get_type_size AST_TYPE_IDENTIFICATOR sem nome do identificador"); else return find_item(tables, name)->item->type_size;
   }
 }
 
@@ -1327,7 +1421,8 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
   symbol_table_item_t *item = NULL;
 
   if(find_item(tables, identifier)) {
-    quit(ERR_DECLARED, "Already declared identifier..");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
   }
 
   token_type_t type = ((valor_lexico_t*)second->value)->type;
@@ -1338,7 +1433,8 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
     if (((valor_lexico_t*)second->first_child->value)->type == AST_TYPE_IDENTIFICATOR) {
 
       if(find_item(tables, ((valor_lexico_t*)second->first_child->value)->value.stringValue) == NULL) {
-        quit(ERR_UNDECLARED, "Not declared type");
+        sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Type", ((valor_lexico_t*)second->first_child->value)->value.stringValue, "has not been declared");
+        quit(ERR_UNDECLARED, err_msg);
       } else {
         type=AST_TYPE_CLASS;
       }
@@ -1353,7 +1449,8 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
 
     if(((valor_lexico_t*)second->value)->type == AST_TYPE_IDENTIFICATOR) {
       if(find_item(tables, ((valor_lexico_t*)second->value)->value.stringValue) == NULL) {
-        quit(ERR_UNDECLARED, "Not declared type");
+        sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Type", ((valor_lexico_t*)second->value)->value.stringValue, "has not been declared");
+        quit(ERR_UNDECLARED, err_msg);
       } else {
         type=AST_TYPE_CLASS;
       }
@@ -1363,7 +1460,8 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
   }
 
   if(add_item(tables, identifier, item) == -1)
-    quit(ERR_DECLARED, "Token already declared");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
+    quit(ERR_DECLARED, err_msg);
 }
 
 void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector) {
@@ -1373,15 +1471,18 @@ void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector
   symbol_table_t *st = find_item(tables, identifier);
   
   if( st == NULL) {
-    quit(ERR_UNDECLARED, "Identifier not declared");
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", identifier, "has not been declared");
+    quit(ERR_UNDECLARED, err_msg);
   }
 
   if(st->item->type != AST_TYPE_CLASS) {
-    quit(ERR_USER, "Can only access user type variables");
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Can only access user type variables");
+    quit(ERR_USER, err_msg);
   }
 
   if(is_vector && (st->item->is_vector <= 0)) {
-    quit(ERR_VECTOR, "This variable is not a vector.");
+    sprintf(err_msg, "line %d: %s %s\n", get_line_number(), identifier, "is not a vector");
+    quit(ERR_VECTOR, err_msg);
   }
 
   symbol_table_t *st_type = find_item(tables, st->item->value.stringValue);
@@ -1401,7 +1502,8 @@ void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector
   }
 
   if(!found) {
-    quit(ERR_USER, "User Class does not have such property.");
+    sprintf(err_msg, "line %d: %s\n", get_line_number(), "User Class does not have such property.");
+    quit(ERR_USER, err_msg);
   }
 }
 
@@ -1423,6 +1525,27 @@ int is_compact(token_type_t t1, token_type_t t2) {
 
   if(t1 == AST_TYPE_CLASS && t2 == AST_TYPE_CLASS) return 1;
   return 0;
+}
+
+const char* type_to_str(token_type_t tkn){
+  switch(tkn){
+      case AST_TYPE_NULL: return "AST_TYPE_NULL";
+      break;
+      case AST_TYPE_INT: return "AST_TYPE_INT";
+      break;
+      case AST_TYPE_FLOAT: return "AST_TYPE_FLOAT";
+      break;
+      case AST_TYPE_BOOL: return "AST_TYPE_BOOL";
+      break;
+      case AST_TYPE_CHAR: return "AST_TYPE_CHAR";
+      break;
+      case AST_TYPE_STRING: return "AST_TYPE_STRING";
+      break;
+      case AST_TYPE_CLASS:
+      case AST_TYPE_IDENTIFICATOR:
+        return "AST_TYPE_CLASS";
+        break;
+      }
 }
 
 // symbol_table_t* get_table(void) {

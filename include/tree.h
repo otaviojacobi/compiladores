@@ -15,6 +15,7 @@ typedef struct tree_node {
     struct tree_node* last_child;
     struct tree_node* brother_next;
     struct tree_node* brother_prev;
+    token_type_t implicit_conversion;
 } tree_node_t;
 
 

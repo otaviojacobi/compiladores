@@ -17,6 +17,7 @@ tree_node_t *make_node(void *value) {
   new_node->last_child = NULL;
   new_node->brother_next = NULL;
   new_node->brother_prev = NULL;
+  new_node->implicit_conversion = AST_TYPE_NULL;
 
   return new_node;
 }

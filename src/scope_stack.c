@@ -2,11 +2,10 @@
 
 symbol_table_t* find_item(stack_node_t* tables, char *key){
 	symbol_table_t** temp = (symbol_table_t**) tables->value;
-	symbol_table_t* return_value;
 	if(tables->next == NULL){
 		return _find_item(temp, key);
 	}else{
-		return_value = _find_item(temp, key);
+		symbol_table_t* return_value = _find_item(temp, key);
 		if(return_value == NULL)
 			return find_item(tables->next, key);
 		else
@@ -34,6 +33,18 @@ void pop(stack_node_t** s){
 	free(temp);
 }
 
-void new_scope(stack_node_t **tables, symbol_table_t** new_scope){
+void new_scope(stack_node_t **tables, symbol_table_t** new_scope){ // just a more function-descriptive name for push
 	push(tables, new_scope);
+}
+
+int update_item(stack_node_t* tables, char *key, symbol_table_item_t *item){
+	if(tables->next == NULL)
+		return _update_item(tables->value, key, item);
+	else{
+		int return_value = _update_item(tables->value, key, item);
+		if(return_value==-1)
+			return update_item(tables->next, key, item);
+		else 
+			return return_value;
+	}
 }
