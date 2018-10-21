@@ -176,7 +176,7 @@ programa: programa_rec {arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); InsertC
 programa_rec:  new_type_decl programa_rec  { InsertChild($1, $2); $$ = $1; }
              | global_var_decl programa_rec  {  InsertChild($1, $2); $$ = $1; }
              | func programa_rec { InsertChild($1, $2); $$ = $1; }
-             | %empty { $$ = NULL; }
+             | %empty { $$ = MakeNode(AST_TYPE_NULL, NULL); }
 ;
 
 std_type: std_type_node { $$ = $1; };
@@ -371,6 +371,7 @@ global_var_decl: TK_IDENTIFICADOR gv_type ';' {
   InsertChild($$, MakeNode(TK_IDENTIFICADOR, $1));
   InsertChild($$, $2);
 
+  tree_node_t* n2 = $2;
   create_global_value($1, $2, 0);
 
 }
@@ -392,7 +393,9 @@ gv_type: TK_PR_STATIC std_type {
 | TK_PR_STATIC TK_IDENTIFICADOR { 
   $$ = MakeNode(AST_TYPE_STATIC, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2)); }
-| TK_IDENTIFICADOR { $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1); }
+| TK_IDENTIFICADOR { 
+  $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1);
+}
 ;
 
 func: func_head command_block { 
@@ -430,7 +433,7 @@ func: func_head command_block {
   memcpy(item, aux->item, sizeof(symbol_table_item_t));
   item->is_static = 1;
 
-  if(_update_item(&outer_table, identifier, item) == -1)
+  if(update_item(tables, identifier, item) == -1)
     quit(-1, "Something went terrebly wrong in local_var_decl 2...");
 };
 
@@ -787,7 +790,7 @@ local_var_decl: TK_PR_STATIC local_var_static_consumed {
   memcpy(item, aux->item, sizeof(symbol_table_item_t));
   item->is_static = 1;
 
-  if(_update_item(&outer_table, identifier, item) == -1)
+  if(update_item(tables, identifier, item) == -1)
     quit(-1, "Something went terrebly wrong in local_var_decl 2...");
 
 }
@@ -935,8 +938,8 @@ std_type TK_IDENTIFICADOR {
 }
 ;
 
-//TODO: ADICIONAR AS INFERENCIAS DE TIPO !!!
-//TODO: CHECAR TIPO DO USUARIO -> NAO FIZ
+//TODO: ADICIONAR AS INFERENCIAS DE TIPO !!! -> done
+//TODO: CHECAR TIPO DO USUARIO -> NAO FIZ -> eu fiz :D
 attribution: identificador_accessor '=' expression
 {
   $$ = MakeNode(AST_TYPE_ATTRIBUTION, NULL);
@@ -947,7 +950,13 @@ attribution: identificador_accessor '=' expression
 
   token_type_t exp_type = CheckExpression($3);
   token_type_t incoming_type;
-  symbol_table_t *t = find_item(tables, ((valor_lexico_t *)$1->first_child->value)->value.stringValue);
+  
+  char *v_name;
+  if ($1->first_child)
+    v_name = ((valor_lexico_t *)$1->first_child->value)->value.stringValue;
+  else
+    v_name = ((valor_lexico_t *)$1->value)->value.stringValue;
+  symbol_table_t *t = find_item(tables, v_name);
   if(t != NULL) {
     incoming_type = ((symbol_table_item_t *)t->item)->type;
     if(incoming_type == AST_TYPE_CLASS){
@@ -1085,7 +1094,7 @@ TK_IDENTIFICADOR '(' args ')'
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
 
-  //TODO!
+  //TODO! -> tem q fazer algo?
 };
 
 args: 
@@ -1456,12 +1465,13 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
       }
     }
 
-    create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type, NULL), NULL, ((valor_lexico_t*)second->value)->value, 0, 0, is_vector); //TODO: discover last 3 values from tree
+    create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type, first->value.stringValue), NULL, first->value, 0, 0, is_vector); //TODO: discover last 3 values from tree
   }
 
-  if(add_item(tables, identifier, item) == -1)
+  if(add_item(tables, identifier, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
     quit(ERR_DECLARED, err_msg);
+  }
 }
 
 void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector) {

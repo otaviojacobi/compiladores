@@ -132,6 +132,10 @@ void print_fancy (tree_node_t* head) {
 
     switch (value->type) {
 
+      case AST_TYPE_NULL:
+        printf("");
+        break;
+
       case AST_TYPE_PROGRAM_START:  //OK
         head = head->first_child;
         print_fancy(head);
