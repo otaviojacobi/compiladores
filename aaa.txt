@@ -27,8 +27,8 @@ static char foo(MC x, const float z){
 
 }
 
-float foo3(int aj) {}
+float foo3(int aj) {return 10.5;}
 
 float foo2() {
-    return foo(oi, MCg[2]$field1 + foo3(foo3(b)) + x$field2 + b);
+    return foo3(foo3(10));
 }
