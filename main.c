@@ -16,7 +16,7 @@ int main (int argc, char **argv)
 {
   push(&tables, &outer_table);
   int ret = yyparse();
-  print_table(&outer_table);
+  //print_table(&outer_table);
   descompila (arvore);
   libera(arvore);
   clear_table(&outer_table);

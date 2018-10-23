@@ -225,10 +225,16 @@ TK_IDENTIFICADOR
   $$ = MakeNode(AST_TYPE_IDENTIFICATOR, $1);
 
   char* identifier = $1->value.stringValue;
+  symbol_table_t *st = find_item(tables, identifier);
 
-  if(find_item(tables, identifier) == NULL) {
+  if( st == NULL) {
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", identifier, "has not been declared");
     quit(ERR_UNDECLARED, err_msg);
+  }
+
+  if(st->item->is_vector) {
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Vector", identifier, "should be accessed as vector.");
+    quit(ERR_VECTOR, err_msg);
   }
 }
 | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR
@@ -264,7 +270,7 @@ TK_IDENTIFICADOR
 
   if(st->item->is_vector <= 0) {
     sprintf(err_msg, "line %d: %s %s\n", get_line_number(), identifier, "is not a vector");
-    quit(ERR_VECTOR, err_msg);
+    quit(ERR_VARIABLE, err_msg);
   }
 }
 | TK_IDENTIFICADOR '[' expression ']' '$' TK_IDENTIFICADOR
@@ -411,7 +417,9 @@ func: func_head command_block {
     }else
       type = return_type;
   }
-  if(type != return_type){
+
+  //TODO:HERE 
+  if(!is_compact(type, return_type)){
     sprintf(err_msg, "line %d: %s %s, %s %s\n", get_line_number(),"Returning type", type_to_str(return_type),"but function is of type", type_to_str(type));
     quit(ERR_WRONG_PAR_RETURN, err_msg);
   }
@@ -1094,7 +1102,12 @@ TK_IDENTIFICADOR '(' args ')'
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
 
-  //TODO! -> tem q fazer algo?
+  symbol_table_t *st = find_item(tables, $1->value.stringValue);
+
+  if(st == NULL) {
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Function ", $1->value.stringValue, "is not declared");
+    quit(ERR_UNDECLARED, err_msg);
+  }
 };
 
 args: 

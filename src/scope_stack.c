@@ -27,8 +27,8 @@ void push(stack_node_t** stack, symbol_table_t** value){
 void pop(stack_node_t** s){
 	stack_node_t* temp = *s;
 	*s = temp->next;
-	printf("inner table:\n");  // #debug
-	print_table(temp->value);  // #debug
+	//printf("inner table:\n");  // #debug
+	//print_table(temp->value);  // #debug
 	clear_table(temp->value);
 	free(temp);
 }

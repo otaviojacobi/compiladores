@@ -1,0 +1,6 @@
+//RR_WRONG_TYPE
+int f()
+{
+  string str;
+  str = 10.2;
+}
