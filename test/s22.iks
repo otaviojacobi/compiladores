@@ -1,4 +1,4 @@
-//RR_WRONG_TYPE
+//ERR_WRONG_TYPE
 int f()
 {
   string str;

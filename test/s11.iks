@@ -1,4 +1,4 @@
-//EXCESS_ARGS
+//ERR_EXCESS_ARGS
 int g(int x){}
 int f()
 {

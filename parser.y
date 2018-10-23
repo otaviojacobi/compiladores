@@ -236,6 +236,11 @@ TK_IDENTIFICADOR
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Vector", identifier, "should be accessed as vector.");
     quit(ERR_VECTOR, err_msg);
   }
+
+  if(st->item->nature == NATUREZA_FUNCAO) {
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Function ", identifier, "should be accessed as function.");
+    quit(ERR_FUNCTION, err_msg);
+  }
 }
 | TK_IDENTIFICADOR '$' TK_IDENTIFICADOR
 {
@@ -251,9 +256,18 @@ TK_IDENTIFICADOR
   $$ = MakeNode(AST_TYPE_VECTOR, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
   InsertChild($$, $3);
-
-  //This should never happen (we have a lexer...), I test anyway....
   token_type_t t = CheckExpression($3);
+
+  if(t == AST_TYPE_CHAR) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Invalid cast for char.");
+    quit(ERR_CHAR_TO_X, err_msg);
+  }
+
+  if(t == AST_TYPE_STRING) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Invalid cast for string.");
+    quit(ERR_STRING_TO_X, err_msg);
+  }
+
   if(t != AST_TYPE_BOOL && t != AST_TYPE_INT && t != AST_TYPE_FLOAT){
     sprintf(err_msg, "line %d: %s\n", get_line_number(),"You're trying to access a vector with some invalid type");
     quit(ERR_VECTOR, err_msg);
@@ -419,7 +433,7 @@ func: func_head command_block {
   }
 
   //TODO:HERE 
-  if(!is_compact(type, return_type)){
+  if(!is_compact(type, return_type) && type != AST_TYPE_NULL && return_type != AST_TYPE_NULL){
     sprintf(err_msg, "line %d: %s %s, %s %s\n", get_line_number(),"Returning type", type_to_str(return_type),"but function is of type", type_to_str(type));
     quit(ERR_WRONG_PAR_RETURN, err_msg);
   }
@@ -529,7 +543,9 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       } else {
         p_last->next = p_create;
       }
+      
       p_last = p_create;
+
 
       aux = aux->brother_next;
       counter++;
@@ -877,7 +893,7 @@ std_type TK_IDENTIFICADOR {
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
 
   symbol_table_t *st = find_item(tables, ((valor_lexico_t*)$4)->value.stringValue);
-  if( st == NULL ) {        
+  if( st == NULL ) {
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", ((valor_lexico_t*)$4)->value.stringValue, "is not declared");
     quit(ERR_UNDECLARED, err_msg);
   }
@@ -892,7 +908,7 @@ std_type TK_IDENTIFICADOR {
 
   if( (type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
       (type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) ){
-    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.");quit(ERR_STRING_TO_X, err_msg);
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.!");quit(ERR_STRING_TO_X, err_msg);
   }
 
   if ( (type == AST_TYPE_CHAR && incoming_type != AST_TYPE_CHAR) ||
@@ -924,7 +940,7 @@ std_type TK_IDENTIFICADOR {
 
   if((type == AST_TYPE_STRING && incoming_type != AST_TYPE_LITERAL_STRING) ||
      (type != AST_TYPE_STRING && incoming_type == AST_TYPE_LITERAL_STRING) ){
-    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.");
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted..");
     quit(ERR_STRING_TO_X, err_msg);
   }
 
@@ -957,41 +973,55 @@ attribution: identificador_accessor '=' expression
   tree_node_t * exprr = $3;
 
   token_type_t exp_type = CheckExpression($3);
-  token_type_t incoming_type;
-  
+  token_type_t receive_type;
+
   char *v_name;
   if ($1->first_child)
     v_name = ((valor_lexico_t *)$1->first_child->value)->value.stringValue;
   else
     v_name = ((valor_lexico_t *)$1->value)->value.stringValue;
+
   symbol_table_t *t = find_item(tables, v_name);
   if(t != NULL) {
-    incoming_type = ((symbol_table_item_t *)t->item)->type;
-    if(incoming_type == AST_TYPE_CLASS){
+    receive_type = ((symbol_table_item_t *)t->item)->type;
+    if(receive_type == AST_TYPE_CLASS && exp_type != AST_TYPE_CLASS){
       char* target_name = ((valor_lexico_t *)$1->first_child->brother_next->value)->value.stringValue;
       arg_list_t* fields = find_item(tables, t->item->value.stringValue)->item->arg_list;
       for(; fields!=NULL; fields=fields->next){
         if(strcmp(fields->field_name, target_name) == 0)
-          incoming_type=fields->type;
+          receive_type=fields->type;
       }
     }
   }
 
-  if( (exp_type == AST_TYPE_STRING && incoming_type != AST_TYPE_STRING) ||
-      (exp_type != AST_TYPE_STRING && incoming_type == AST_TYPE_STRING) ){
-    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Strings can't be implicitly converted.");
-    quit(ERR_STRING_TO_X, err_msg);
+  if ((exp_type == AST_TYPE_CLASS && receive_type != AST_TYPE_CLASS) || (exp_type != AST_TYPE_CLASS && receive_type == AST_TYPE_CLASS)){
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Custom types can't be implicitly converted.");
+    quit(ERR_USER_TO_X, err_msg);
   }
 
-  if ( (exp_type == AST_TYPE_CHAR && incoming_type != AST_TYPE_CHAR) ||
-       (exp_type != AST_TYPE_CHAR && incoming_type == AST_TYPE_CHAR) ){
-    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Char can't be implicitly converted.");
+  if (exp_type == AST_TYPE_CHAR && receive_type != AST_TYPE_CHAR) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Can't convert to char.");
     quit(ERR_CHAR_TO_X, err_msg);
   }
 
+  if(exp_type == AST_TYPE_STRING && receive_type != AST_TYPE_STRING) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Can't convert to string");
+    quit(ERR_STRING_TO_X, err_msg);
+  }
 
-  if(exp_type != incoming_type && exp_type == AST_TYPE_FLOAT || exp_type == AST_TYPE_INT || exp_type == AST_TYPE_BOOL && incoming_type == AST_TYPE_FLOAT || incoming_type == AST_TYPE_INT || incoming_type == AST_TYPE_BOOL)
-    $$->implicit_conversion = incoming_type;
+  if(exp_type != AST_TYPE_STRING && receive_type == AST_TYPE_STRING) {
+      sprintf(err_msg, "line %d: %s\n", get_line_number(),"String can't be implicitly converted.");
+      quit(ERR_WRONG_TYPE, err_msg);
+  }
+
+  if(exp_type != AST_TYPE_CHAR && receive_type == AST_TYPE_CHAR) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Char can't be implicitly converted.");
+    quit(ERR_WRONG_TYPE, err_msg);
+  }
+
+
+  if(exp_type != receive_type && exp_type == AST_TYPE_FLOAT || exp_type == AST_TYPE_INT || exp_type == AST_TYPE_BOOL && receive_type == AST_TYPE_FLOAT || receive_type == AST_TYPE_INT || receive_type == AST_TYPE_BOOL)
+    $$->implicit_conversion = receive_type;
 }
 ;
 
@@ -1012,6 +1042,11 @@ TK_IDENTIFICADOR '(' args ')'
   if(st == NULL) {
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", $1->value.stringValue, "is not declared");
     quit(ERR_UNDECLARED, err_msg);
+  }
+
+  if(st->item->nature != NATUREZA_FUNCAO) {
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"The called function", $1->value.stringValue, "is not a function");
+    quit(ERR_VARIABLE, err_msg);
   }
 
   arg_list_t *params = st->item->arg_list;
@@ -1107,6 +1142,19 @@ TK_IDENTIFICADOR '(' args ')'
   if(st == NULL) {
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Function ", $1->value.stringValue, "is not declared");
     quit(ERR_UNDECLARED, err_msg);
+  }
+
+  if(st->item->nature != NATUREZA_FUNCAO) {
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"The called function", $1->value.stringValue, "is not a function");
+    if(st->item->is_vector) 
+      quit(ERR_VECTOR, err_msg);
+    else
+      quit(ERR_VARIABLE, err_msg);
+  }
+
+  if(st->item->arg_list != NULL) {
+    sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Too much parameters on function call ", $1->value.stringValue, ".");
+    quit(ERR_MISSING_ARGS, err_msg);
   }
 };
 
@@ -1357,8 +1405,17 @@ token_type_t CheckExpression(tree_node_t *node) {
           (first_type == AST_TYPE_FLOAT && second_type == AST_TYPE_INT) )
         return AST_TYPE_FLOAT;
 
-      sprintf(err_msg, "line %d: %s\n", get_line_number(), "Wrong type 2.");
-      quit(ERR_WRONG_TYPE, err_msg);
+      if(first_type == AST_TYPE_CHAR || second_type == AST_TYPE_CHAR) {
+        sprintf(err_msg, "line %d: %s\n", get_line_number(), "Wrong type 2.");
+        quit(ERR_CHAR_TO_X, err_msg);
+      } else if(first_type == AST_TYPE_STRING || second_type == AST_TYPE_STRING) {
+        sprintf(err_msg, "line %d: %s\n", get_line_number(), "Wrong type 2.");
+        quit(ERR_STRING_TO_X, err_msg);
+      } else if(first_type == AST_TYPE_CHAR || second_type == AST_TYPE_CHAR) {
+        sprintf(err_msg, "line %d: %s\n", get_line_number(), "Wrong type 2.");
+        quit(ERR_USER_TO_X, err_msg);
+      }
+
       break;
 
     case AST_TYPE_IDENTIFICATOR:
@@ -1500,7 +1557,7 @@ void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector
 
   if(st->item->type != AST_TYPE_CLASS) {
     sprintf(err_msg, "line %d: %s\n", get_line_number(),"Can only access user type variables");
-    quit(ERR_USER, err_msg);
+    quit(ERR_VARIABLE, err_msg);
   }
 
   if(is_vector && (st->item->is_vector <= 0)) {

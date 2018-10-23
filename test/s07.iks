@@ -1,4 +1,4 @@
-//R_FUNCTION
+//ERR_FUNCTION
 int x(){}
 int f()
 {
