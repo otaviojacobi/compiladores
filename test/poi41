@@ -1,4 +1,4 @@
-//o comando output aceita um literal string ou uma expressão aritmética a ser impressa
+//o comando output aceita um literal string ou uma expressão aritmética a ser impressa ou var
 int main()
 {
   int a;

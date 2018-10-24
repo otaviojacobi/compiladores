@@ -54,7 +54,7 @@ for TEST_FILE in $(ls test/); do
     ./$PROGRAM < test/$TEST_FILE > /dev/null
     PROGRAM_RESULT=$?
 
-    val_res=$(valgrind --leak-check=full ./$PROGRAM < test/$TEST_FILE 2>&1)
+    val_res=$(valgrind ./$PROGRAM < test/$TEST_FILE 2>&1)
     $(echo $val_res | grep "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)" > /dev/null)
     val_res=$?
     if [ -z "$result" ]; then

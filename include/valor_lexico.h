@@ -5,6 +5,7 @@
 #include "utils.h"
 
 typedef enum {
+
   AST_TYPE_NULL,
   AST_TYPE_INT,
   AST_TYPE_FLOAT,

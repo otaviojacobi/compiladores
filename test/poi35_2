@@ -1,0 +1,13 @@
+//O comando input somente aceita identificadores de qualquer tipo como parâmetro
+//ERR_FUNCTION
+int f(int c) {
+    int j;
+    return 2;
+} 
+
+int main()
+{
+  int a;
+  input f;
+  return a;
+}

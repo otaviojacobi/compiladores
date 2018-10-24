@@ -547,7 +547,6 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       
       p_last = p_create;
 
-
       aux = aux->brother_next;
       counter++;
     }
@@ -1027,8 +1026,61 @@ attribution: identificador_accessor '=' expression
 }
 ;
 
-input: TK_PR_INPUT expression         {$$ = MakeNode(AST_TYPE_INPUT, NULL); InsertChild($$, $2);};
-output: TK_PR_OUTPUT expression_list  {$$ = MakeNode(AST_TYPE_OUTPUT, NULL); InsertChild($$, $2); };
+input: TK_PR_INPUT expression
+{
+  $$ = MakeNode(AST_TYPE_INPUT, NULL);
+  InsertChild($$, $2);
+
+  if( ((valor_lexico_t*)$2->value)->type != AST_TYPE_IDENTIFICATOR ) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Input parameter should be a declared vairable.");
+    quit(ERR_WRONG_PAR_INPUT, err_msg);
+  }
+
+  symbol_table_t *st = find_item(tables, ((valor_lexico_t*)$2->value)->value.stringValue);
+
+  if (st == NULL ) {
+    sprintf(err_msg, "line %d: %s\n", get_line_number(),"Input parameter should be a declared vairable.");
+    quit(ERR_UNDECLARED, err_msg);
+  }
+};
+
+output: TK_PR_OUTPUT expression_list  {
+  $$ = MakeNode(AST_TYPE_OUTPUT, NULL); InsertChild($$, $2); 
+
+  tree_node_t *t = $2->first_child;
+  symbol_table_t *st;
+
+  token_type_t type;
+  while(t != NULL) {
+    type = ((valor_lexico_t*)t->value)->type;
+
+    if( type != AST_TYPE_LITERAL_STRING
+       && (type < AST_TYPE_ADD || type > AST_TYPE_NEGATIVE)
+       && type != AST_TYPE_LITERAL_INT
+       && type != AST_TYPE_LITERAL_FLOAT
+       && type != AST_TYPE_LITERAL_BOOL
+       && type != AST_TYPE_IDENTIFICATOR) {
+      sprintf(err_msg, "line %d: %s\n", get_line_number(),"Output parameter should be a string or aritmetic expression.");
+      quit(ERR_WRONG_PAR_OUTPUT, err_msg);
+    }
+
+    if (type == AST_TYPE_IDENTIFICATOR) {
+      st = find_item(tables, ((valor_lexico_t*)t->value)->value.stringValue);
+      if(st == NULL) {
+        sprintf(err_msg, "line %d: %s\n", get_line_number(),"Output parameter not declared");
+        quit(ERR_UNDECLARED, err_msg);
+      }
+
+      if(st->item->type == AST_TYPE_CHAR) {
+        sprintf(err_msg, "line %d: %s\n", get_line_number(),"Output parameter should not be char or custom type");
+        quit(ERR_WRONG_PAR_OUTPUT, err_msg);
+      }
+    }
+
+    t = t->brother_next;
+  }
+}
+;
 
 func_call: 
 TK_IDENTIFICADOR '(' args ')'

@@ -1,4 +1,4 @@
-//
+//ERR_WRONG_PAR_INPUT
 int f()
 {
   input "teste";

@@ -1,7 +1,8 @@
 //o comando output aceita um literal string ou uma expressão aritmética a ser impressa
+//ERR_UNDECLARED
 int main()
 {
   int a;
-  output "oi", 3 + 5 * 2 /3;
-  return a;
+  output b;
+  return 0;
 }
