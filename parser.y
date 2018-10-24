@@ -492,6 +492,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
     while(aux != NULL) {
 
       p_create = (arg_list_t*)malloc(sizeof(arg_list_t));
+      p_create->next=NULL;
       aux_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
       
       if (((valor_lexico_t*)aux->value)->type == AST_TYPE_CONST) {
@@ -553,7 +554,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   }
 
   create_table_item(item, get_line_number(), NATUREZA_FUNCAO, type, get_type_size(type, value.stringValue),params, value, 0, 0, 0);
-  if(add_item(tables->next, value.stringValue, item) == -1){
+  //TODO: if comipling fails the problem might be here -> couldn't test
+  if(_add_item(&outer_table, value.stringValue, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", value.stringValue, "has already been declared");
     quit(ERR_DECLARED, err_msg);
   }
@@ -1076,6 +1078,17 @@ TK_IDENTIFICADOR '(' args ')'
           }
         break;
 
+        case AST_TYPE_LITERAL_BOOL:
+        case AST_TYPE_LITERAL_INT:
+        case AST_TYPE_LITERAL_CHAR:
+        case AST_TYPE_LITERAL_FLOAT:
+        case AST_TYPE_LITERAL_STRING:
+          if(!is_compact(CheckExpression(node), params->type)) {
+            sprintf(err_msg, "line %d: %s\n", get_line_number(),"Incompatible parameters");
+            quit(ERR_WRONG_TYPE_ARGS, err_msg);
+          } 
+          break;
+
         case AST_TYPE_OBJECT:
           if (((valor_lexico_t*)node->first_child->value)->type == AST_TYPE_VECTOR) {
             st_aux = find_item(tables, ((valor_lexico_t*)(node->first_child->first_child->value))->value.stringValue);
@@ -1116,13 +1129,12 @@ TK_IDENTIFICADOR '(' args ')'
         break;
       }
 
-      node = node->brother_next;
-      params = params->next;
-
-      if(params == NULL && node != NULL) {
+      if(params->next == NULL && node->brother_next != NULL) {
         sprintf(err_msg, "line %d: %s\n", get_line_number(),"Too many arguments on function call");
         quit(ERR_EXCESS_ARGS, err_msg);
       }
+      node = node->brother_next;
+      params = params->next;
     }
 
     if(params != NULL) {
