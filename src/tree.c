@@ -18,6 +18,7 @@ tree_node_t *make_node(void *value) {
   new_node->brother_next = NULL;
   new_node->brother_prev = NULL;
   new_node->implicit_conversion = AST_TYPE_NULL;
+  new_node->node_type = AST_TYPE_NULL;
 
   return new_node;
 }
@@ -626,7 +627,8 @@ void print_fancy (tree_node_t* head) {
         printf(" %%|%% ");
         print_fancy(head->first_child->brother_next);
         break;
-      
+
+      case AST_TYPE_USED_DOT:
       case AST_TYPE_DOT: printf("."); break;
       
       default: printf("ESQUECEU DE INSERIR BOCA ABERTA\n");

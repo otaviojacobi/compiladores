@@ -97,7 +97,8 @@ typedef enum {
   // pipe and weird stuff
   AST_TYPE_FOWARD_PIPE,
   AST_TYPE_BASH_PIPE,
-  AST_TYPE_DOT
+  AST_TYPE_DOT,
+  AST_TYPE_USED_DOT
 
 } token_type_t;
 
