@@ -27,6 +27,8 @@
 #define ERR_WRONG_PAR_OUTPUT 51 //parâmetro não é literal string ou expressão
 #define ERR_WRONG_PAR_RETURN 52 //parâmetro não é expressão compatível com tipo do retorno
 
+#define ERR_NOT_IMPLEMENTED 60
+
 #include <stdio.h>
 #include <stdlib.h>
 

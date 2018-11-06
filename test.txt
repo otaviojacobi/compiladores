@@ -1,7 +1,5 @@
-//o comando output aceita um literal string ou uma expressão aritmética a ser impressa
-int main()
-{
-  int a;
-  output "oi", 3 + 5 * 2 /3;
-  return a;
+int main() {
+  int j <= 1;
+  int i <= 2;
+
 }

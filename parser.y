@@ -6,6 +6,7 @@
   #include "err.h"
   #include "scope_stack.h"
   #include "symbol_table.h"
+  #include "iloc.h"
 }
 
 %{
@@ -17,6 +18,8 @@
   #include "err.h"
   #include "scope_stack.h"
   #include "symbol_table.h"
+  #include "iloc.h"
+  #include "iloc.h"
 
   extern tree_node_t *arvore;
   extern stack_node_t *tables;
@@ -33,6 +36,7 @@
   tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico);
   void InsertChild(tree_node_t *father, tree_node_t *children);
   token_type_t CheckExpression(tree_node_t *node);
+  operation_list_t *GenerateCode(tree_node_t* head);
   int get_type_size(token_type_t type, char* name);
   void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
   void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector);
@@ -171,7 +175,12 @@
 
 %%
 
-programa: programa_rec {arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); InsertChild(arvore, $1);}
+programa: programa_rec {
+  arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); 
+  InsertChild(arvore, $1);
+  operation_list_t *code = GenerateCode($1);
+  print_op_list(code);
+}
 ;
 
 programa_rec:  new_type_decl programa_rec  { InsertChild($1, $2); $$ = $1; }
@@ -1182,11 +1191,11 @@ TK_IDENTIFICADOR '(' args ')'
           }
         break;
         case AST_TYPE_FUNCTION_CALL: 
-        	aux_type = find_item(tables, ((valor_lexico_t*)node->first_child->value)->value.stringValue)->item->type;
-        	if(params->type != aux_type){
-        		sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(params->type), type_to_str(aux_type));
-    			quit(ERR_WRONG_TYPE_ARGS, err_msg);
-        	}
+          aux_type = find_item(tables, ((valor_lexico_t*)node->first_child->value)->value.stringValue)->item->type;
+          if(params->type != aux_type){
+            sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(params->type), type_to_str(aux_type));
+          quit(ERR_WRONG_TYPE_ARGS, err_msg);
+          }
         break;
       }
 
@@ -1241,8 +1250,8 @@ args ',' expression  {
   InsertChild($$, MakeNode(AST_TYPE_DOT, NULL));
 }
 | '.'                { 
-	$$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL); InsertChild($$, MakeNode(AST_TYPE_DOT, NULL));
-	tree_node_t *ss = $$;
+  $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL); InsertChild($$, MakeNode(AST_TYPE_DOT, NULL));
+  tree_node_t *ss = $$;
 
 }
 | expression         { $$ = MakeNode(AST_TYPE_EXPRESSION_LIST, NULL); InsertChild($$, $1); }
@@ -1332,7 +1341,7 @@ pipe_rec TK_OC_FORWARD_PIPE func_call
   token_type_t dot_type = get_next_dot_proposed_type($3);
   token_type_t pipe_rec_type = CheckExpression($1);
   if(dot_type != AST_TYPE_NULL && pipe_rec_type != dot_type){
-  	sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
+    sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
     quit(ERR_WRONG_TYPE_ARGS, err_msg);
   }
 }
@@ -1346,7 +1355,7 @@ pipe_rec TK_OC_FORWARD_PIPE func_call
   token_type_t dot_type = get_next_dot_proposed_type($3);
   token_type_t pipe_rec_type = CheckExpression($1);
   if(dot_type != AST_TYPE_NULL && pipe_rec_type != dot_type){
-  	sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
+    sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
     quit(ERR_WRONG_TYPE_ARGS, err_msg);
   }
 };
@@ -1362,7 +1371,7 @@ pipe_rec TK_OC_FORWARD_PIPE func_call
   token_type_t dot_type = get_next_dot_proposed_type($3);
   token_type_t pipe_rec_type = CheckExpression($1);
   if(dot_type != AST_TYPE_NULL && pipe_rec_type != dot_type){
-  	sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
+    sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
     quit(ERR_WRONG_TYPE_ARGS, err_msg);
   }
 }
@@ -1375,7 +1384,7 @@ pipe_rec TK_OC_FORWARD_PIPE func_call
   token_type_t dot_type = get_next_dot_proposed_type($3);
   token_type_t pipe_rec_type = CheckExpression($1);
   if(dot_type != AST_TYPE_NULL && pipe_rec_type != dot_type){
-  	sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
+    sprintf(err_msg, "line %d: Expected type: %s. Received type: %s\n", get_line_number(), type_to_str(dot_type), type_to_str(pipe_rec_type));
     quit(ERR_WRONG_TYPE_ARGS, err_msg);
   }
 }
@@ -1467,7 +1476,7 @@ token_type_t CheckExpression(tree_node_t *node) {
   char *name;
 
   if(node->node_type != AST_TYPE_NULL)  // if node_type is not default
-  	return node->node_type;
+    return node->node_type;
 
   switch(vl->type) {
     case AST_TYPE_LITERAL_CHAR: return AST_TYPE_CHAR; break;
@@ -1492,9 +1501,9 @@ token_type_t CheckExpression(tree_node_t *node) {
           (second_type == AST_TYPE_INT || second_type == AST_TYPE_FLOAT || second_type == AST_TYPE_BOOL) ){
       
         if(first_type != AST_TYPE_BOOL)
-        	node->first_child->implicit_conversion = AST_TYPE_BOOL;
-       	if(second_type != AST_TYPE_BOOL)
-        	node->first_child->brother_next->implicit_conversion = AST_TYPE_BOOL;
+          node->first_child->implicit_conversion = AST_TYPE_BOOL;
+         if(second_type != AST_TYPE_BOOL)
+          node->first_child->brother_next->implicit_conversion = AST_TYPE_BOOL;
 
         node->node_type = AST_TYPE_BOOL;
         return AST_TYPE_BOOL;
@@ -1525,30 +1534,30 @@ token_type_t CheckExpression(tree_node_t *node) {
 
 
       if(first_type == second_type){
-      	node->node_type = first_type;
-      	return first_type;
+        node->node_type = first_type;
+        return first_type;
       }
 
 
-  	  if(first_type == AST_TYPE_FLOAT || second_type == AST_TYPE_FLOAT){
-  	  	if(first_type != AST_TYPE_FLOAT)
-  	  		node->first_child->implicit_conversion = AST_TYPE_FLOAT;
-  	  	else
-  	  		node->first_child->brother_next->implicit_conversion = AST_TYPE_FLOAT;
+      if(first_type == AST_TYPE_FLOAT || second_type == AST_TYPE_FLOAT){
+        if(first_type != AST_TYPE_FLOAT)
+          node->first_child->implicit_conversion = AST_TYPE_FLOAT;
+        else
+          node->first_child->brother_next->implicit_conversion = AST_TYPE_FLOAT;
 
-  	  	node->node_type = AST_TYPE_FLOAT;
-  	  	return AST_TYPE_FLOAT;
-  	  }
+        node->node_type = AST_TYPE_FLOAT;
+        return AST_TYPE_FLOAT;
+      }
 
-  	  if(first_type == AST_TYPE_INT || second_type == AST_TYPE_INT){
-  	  	if(first_type != AST_TYPE_INT)
-  	  		node->first_child->implicit_conversion = AST_TYPE_INT;
-  	  	else
-  	  		node->first_child->brother_next->implicit_conversion = AST_TYPE_INT;
+      if(first_type == AST_TYPE_INT || second_type == AST_TYPE_INT){
+        if(first_type != AST_TYPE_INT)
+          node->first_child->implicit_conversion = AST_TYPE_INT;
+        else
+          node->first_child->brother_next->implicit_conversion = AST_TYPE_INT;
 
-  	  	node->node_type = AST_TYPE_INT;
-  	  	return AST_TYPE_INT;
-  	  }
+        node->node_type = AST_TYPE_INT;
+        return AST_TYPE_INT;
+      }
 
       break;
 
@@ -1556,7 +1565,7 @@ token_type_t CheckExpression(tree_node_t *node) {
 
       st = find_item(tables, ((valor_lexico_t *)node->value)->value.stringValue);
       if(st != NULL) {
-      	node->node_type = ((symbol_table_item_t *)st->item)->type;
+        node->node_type = ((symbol_table_item_t *)st->item)->type;
         return node->node_type;
       }
       else {
@@ -1566,10 +1575,10 @@ token_type_t CheckExpression(tree_node_t *node) {
 
       break;
 
-	case AST_TYPE_BASH_PIPE:
-		node->node_type = CheckExpression(node->first_child->brother_next);
-		return node->node_type;
-	  break;
+  case AST_TYPE_BASH_PIPE:
+    node->node_type = CheckExpression(node->first_child->brother_next);
+    return node->node_type;
+    break;
     case AST_TYPE_VECTOR:
           st = find_item(tables, ((valor_lexico_t*)(node->first_child->value))->value.stringValue);
           if(st == NULL){
@@ -1771,28 +1780,56 @@ const char* type_to_str(token_type_t tkn){
 }
 
 token_type_t get_next_dot_proposed_type(tree_node_t* func_call){
-	char* func_name = ((valor_lexico_t*) func_call->first_child->value)->value.stringValue;
-	tree_node_t *aux = func_call->first_child->brother_next->first_child; // got first of linked argument list
-	token_type_t dot_type = AST_TYPE_NULL;
-	int counter = 1;
-	arg_list_t* func_args;
-	while(aux != NULL && dot_type == AST_TYPE_NULL){
-		if(((valor_lexico_t*) aux->value)->type == AST_TYPE_DOT){
-			((valor_lexico_t*) aux->value)->type=AST_TYPE_USED_DOT; // used dot as it has been "filled" 
-			func_args = find_item(tables, func_name)->item->arg_list;
-			for(int i=counter; i > 1; i--){ func_args = func_args->next; }
-			dot_type = func_args->type;
-		}
-		aux = aux->brother_next;
-		counter++;
-	}
+  char* func_name = ((valor_lexico_t*) func_call->first_child->value)->value.stringValue;
+  tree_node_t *aux = func_call->first_child->brother_next->first_child; // got first of linked argument list
+  token_type_t dot_type = AST_TYPE_NULL;
+  int counter = 1;
+  arg_list_t* func_args;
+  while(aux != NULL && dot_type == AST_TYPE_NULL){
+    if(((valor_lexico_t*) aux->value)->type == AST_TYPE_DOT){
+      ((valor_lexico_t*) aux->value)->type=AST_TYPE_USED_DOT; // used dot as it has been "filled" 
+      func_args = find_item(tables, func_name)->item->arg_list;
+      for(int i=counter; i > 1; i--){ func_args = func_args->next; }
+      dot_type = func_args->type;
+    }
+    aux = aux->brother_next;
+    counter++;
+  }
 
-	return dot_type;
+  return dot_type;
 }
 
-// symbol_table_t* get_table(void) {
-//   if(outer_table == NULL) {
-//     outer_table = (symbol_table_t*)malloc(sizeof(symbol_table_t));
-//   }
-//   return outer_table;
-// }
+operation_list_t *GenerateCode(tree_node_t* head) {
+
+  if(head == NULL)
+    return NULL;
+
+  switch(((valor_lexico_t*)head->value)->type) {
+    case AST_TYPE_PROGRAM_START:  //OK
+      head = head->first_child;
+      GenerateCode(head);
+      break;
+
+    case AST_TYPE_FUNCTION:
+      GenerateCode(head->first_child->brother_next);
+      break;
+
+    case AST_TYPE_DECLR:
+      printf("a decl\n");
+      //quit(ERR_NOT_IMPLEMENTED, "Achei safado.");
+      break;
+
+    case AST_TYPE_COMMAND_BLOCK:
+      GenerateCode(head->first_child);
+      break;
+
+    case AST_TYPE_COMMAND:
+      for(tree_node_t* itr=head->first_child; itr; itr = itr->brother_next)
+        GenerateCode(itr);
+      break;
+
+    default:
+      printf("\n%d\n", ((valor_lexico_t*)head->value)->type);
+      quit(ERR_NOT_IMPLEMENTED, "Not implemented.");
+  }
+}
