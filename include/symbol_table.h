@@ -24,6 +24,8 @@ typedef struct symbol_table_item {
     int type_size;
     arg_list_t *arg_list;
     token_value_t value;
+    token_value_t init_value;
+    int var_offset;
     int is_const;
     int is_static;
     int is_vector;

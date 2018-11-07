@@ -33,6 +33,7 @@
   char err_msg[ERROR_MESSAGE_MAX_LENGTH];
   token_type_t return_type;
   char *func_return_type_name;
+  int local_desloc;
 
 
   int yylex(void);
@@ -50,6 +51,7 @@
   int is_compact(token_type_t t1, token_type_t t2);
   const char* type_to_str(token_type_t tkn);
   token_type_t get_next_dot_proposed_type(tree_node_t* node);
+  int ResolveExpress(tree_node_t *head);
 %}
 
 %error-verbose
@@ -185,7 +187,8 @@
 programa: programa_rec {
   arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); 
   InsertChild(arvore, $1);
- GenerateCode($1);
+  local_desloc = 0;
+  GenerateCode($1);
 
   print_op_list(code_list);
 }
@@ -937,6 +940,13 @@ std_type TK_IDENTIFICADOR {
   }
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, $2->value.stringValue), NULL, $2->value, 0, 0, 0);
+
+  if(st->item->type != AST_TYPE_INT) {
+    quit(ERR_NOT_IMPLEMENTED, "Only int are suported.");
+  }
+  item->init_value.intValue = st->item->init_value.intValue;
+
+
   if(add_item(tables, identifier, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
     quit(ERR_DECLARED, err_msg);
@@ -973,6 +983,12 @@ std_type TK_IDENTIFICADOR {
 
   char* identifier = value.stringValue;
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
+
+  if( ((valor_lexico_t*)$4->value)->type != AST_TYPE_LITERAL_INT){
+    quit(ERR_NOT_IMPLEMENTED, "Only allowed type is int.");
+  }
+
+  item->init_value.intValue = ((valor_lexico_t*)$4->value)->value.intValue;
   if(add_item(tables, identifier, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
     quit(ERR_DECLARED, err_msg);
@@ -1814,8 +1830,11 @@ void GenerateCode(tree_node_t* head) {
 
   char* decl_name;
   symbol_table_t *st;
+
   int new_register;
   operation_list_t *tmp_list = NULL;
+  valor_lexico_t* vl;
+  int result;
 
   if(code_list == NULL) {
     code_list = create_operation_list_node(OP_NOP, NULL);
@@ -1844,17 +1863,46 @@ void GenerateCode(tree_node_t* head) {
       st->register_or_label = new_register;
 
       tmp_list = create_operation_list_node(OP_LOADI, NULL);
-      (tmp_list->op->left_ops)[0] = 0;
+      (tmp_list->op->left_ops)[0] = st->item->init_value.intValue;
       (tmp_list->op->right_ops)[0] = new_register;
-
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(OP_STOREAI, NULL);
+      (tmp_list->op->left_ops)[0] = new_register;
+      (tmp_list->op->right_ops)[0] = -1;
+      (tmp_list->op->right_ops)[1] = local_desloc;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      st->item->var_offset=local_desloc;
+      local_desloc += 4;
 
       break;
 
     case AST_TYPE_COMMAND_BLOCK:
       GenerateCode(head->first_child);
+      break;
+
+    case AST_TYPE_ATTRIBUTION:
+      decl_name = ((valor_lexico_t*)head->first_child->value)->value.stringValue;
+
+      st = find_item(tables, decl_name);
+
+      if(st == NULL) quit(ERR_UNDECLARED, "This error should never happen2\n");
+
+      result = ResolveExpress(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(OP_STOREAI, NULL);
+      (tmp_list->op->left_ops)[0] = result;
+      (tmp_list->op->right_ops)[0] = -1;
+      (tmp_list->op->right_ops)[1] = st->item->var_offset;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
       break;
 
     case AST_TYPE_COMMAND:
@@ -1865,5 +1913,54 @@ void GenerateCode(tree_node_t* head) {
     default:
       printf("\n%d\n", ((valor_lexico_t*)head->value)->type);
       quit(ERR_NOT_IMPLEMENTED, "Not implemented.");
+  }
+}
+
+int ResolveExpress(tree_node_t *head) {
+  valor_lexico_t *vl = (valor_lexico_t*)head->value;
+  token_type_t head_type = vl->type;
+  operation_list_t *tmp_list;
+  symbol_table_t *st;
+  int new_register;
+  int r_first_value;
+  int r_second_value;
+  int r_result;
+
+  switch(head_type) {
+    
+    case AST_TYPE_IDENTIFICATOR:
+      st = find_item(tables, vl->value.stringValue);
+
+      if(st == NULL) quit(ERR_UNDECLARED, "This error shall never happen\n");
+
+      tmp_list = create_operation_list_node(OP_LOADAI, NULL);
+      (tmp_list->op->left_ops)[0] = -1;
+      (tmp_list->op->left_ops)[1] = st->item->var_offset;
+      new_register = getRegister();
+      (tmp_list->op->right_ops)[0] = new_register;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      return new_register;
+    break;
+
+    case AST_TYPE_ADD:
+      r_first_value = ResolveExpress(head->first_child);
+      r_second_value = ResolveExpress(head->first_child->brother_next);
+      r_result = getRegister();
+      tmp_list = create_operation_list_node(OP_ADD, NULL);
+      (tmp_list->op->left_ops)[0] = r_first_value;
+      (tmp_list->op->left_ops)[1] = r_second_value;
+      (tmp_list->op->right_ops)[0] = r_result;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      return r_result;
+    break;
+
+    default: return -1;
+
   }
 }
