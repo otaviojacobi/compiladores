@@ -69,5 +69,6 @@ typedef struct operation_list {
 int getLabel();
 int getRegister();
 void print_op_list(operation_list_t *iloc_list);
+operation_list_t* create_operation_list_node(int code, char *label);
 
 #endif

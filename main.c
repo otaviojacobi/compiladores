@@ -16,8 +16,6 @@ int main (int argc, char **argv)
 {
   push(&tables, &outer_table);
   int ret = yyparse();
-  libera(arvore);
-  clear_table(&outer_table);
   arvore = NULL;
   return ret;
 }

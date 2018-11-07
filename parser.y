@@ -24,6 +24,11 @@
   extern tree_node_t *arvore;
   extern stack_node_t *tables;
   extern symbol_table_t *outer_table;
+
+  operation_list_t *code_list;
+  operation_list_t *code_list_aux;
+
+
   symbol_table_t *inner_scope;
   char err_msg[ERROR_MESSAGE_MAX_LENGTH];
   token_type_t return_type;
@@ -36,7 +41,9 @@
   tree_node_t* MakeNode(token_type_t type, valor_lexico_t* valor_lexico);
   void InsertChild(tree_node_t *father, tree_node_t *children);
   token_type_t CheckExpression(tree_node_t *node);
-  operation_list_t *GenerateCode(tree_node_t* head);
+
+  void GenerateCode(tree_node_t* head);
+
   int get_type_size(token_type_t type, char* name);
   void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vector );
   void find_in_object(valor_lexico_t *first, valor_lexico_t *second, int is_vector);
@@ -178,8 +185,9 @@
 programa: programa_rec {
   arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); 
   InsertChild(arvore, $1);
-  operation_list_t *code = GenerateCode($1);
-  print_op_list(code);
+ GenerateCode($1);
+
+  print_op_list(code_list);
 }
 ;
 
@@ -447,7 +455,7 @@ func: func_head command_block {
     sprintf(err_msg, "line %d: %s %s, %s %s\n", get_line_number(),"Returning type", type_to_str(return_type),"but function is of type", type_to_str(type));
     quit(ERR_WRONG_PAR_RETURN, err_msg);
   }
-  pop(&tables);
+  //pop(&tables);
 }
 | TK_PR_STATIC func_head command_block {
   $$ = MakeNode(AST_TYPE_STATIC, NULL);
@@ -456,7 +464,7 @@ func: func_head command_block {
   InsertChild(func, $2); 
   InsertChild(func, $3);
   InsertChild($$, func);
-  pop(&tables);
+  //pop(&tables);
   char *identifier = ((valor_lexico_t*)$2->first_child->brother_next->value)->value.stringValue;
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
@@ -1799,10 +1807,21 @@ token_type_t get_next_dot_proposed_type(tree_node_t* func_call){
   return dot_type;
 }
 
-operation_list_t *GenerateCode(tree_node_t* head) {
+void GenerateCode(tree_node_t* head) {
 
   if(head == NULL)
-    return NULL;
+    return;
+
+  char* decl_name;
+  symbol_table_t *st;
+  int new_register;
+  operation_list_t *tmp_list = NULL;
+
+  if(code_list == NULL) {
+    code_list = create_operation_list_node(OP_NOP, NULL);
+    code_list_aux = code_list;
+    code_list->next = NULL;
+  }
 
   switch(((valor_lexico_t*)head->value)->type) {
     case AST_TYPE_PROGRAM_START:  //OK
@@ -1815,8 +1834,23 @@ operation_list_t *GenerateCode(tree_node_t* head) {
       break;
 
     case AST_TYPE_DECLR:
-      printf("a decl\n");
-      //quit(ERR_NOT_IMPLEMENTED, "Achei safado.");
+    
+      decl_name =  ((valor_lexico_t*)head->first_child->brother_next->value)->value.stringValue;
+      st = find_item(tables, decl_name);
+
+      if(st == NULL) quit(ERR_UNDECLARED, "This error should never happen\n");
+
+      new_register = getRegister();
+      st->register_or_label = new_register;
+
+      tmp_list = create_operation_list_node(OP_LOADI, NULL);
+      (tmp_list->op->left_ops)[0] = 0;
+      (tmp_list->op->right_ops)[0] = new_register;
+
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
       break;
 
     case AST_TYPE_COMMAND_BLOCK:

@@ -33,6 +33,7 @@ typedef struct symbol_table {
 
     char key[30];
     symbol_table_item_t *item;
+    int register_or_label;
     UT_hash_handle hh;
 
 } symbol_table_t;

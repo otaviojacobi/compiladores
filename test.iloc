@@ -1,0 +1,3 @@
+nop;
+loadI c1 => r1;
+loadI c1 => r2;
