@@ -52,6 +52,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "valor_lexico.h"
 
 typedef struct operation {
   int code;
@@ -70,5 +71,6 @@ int getLabel();
 int getRegister();
 void print_op_list(operation_list_t *iloc_list);
 operation_list_t* create_operation_list_node(int code, char *label);
+int getOpFromType(int type);
 
 #endif

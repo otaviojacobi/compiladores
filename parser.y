@@ -1946,10 +1946,13 @@ int ResolveExpress(tree_node_t *head) {
     break;
 
     case AST_TYPE_ADD:
+    case AST_TYPE_SUB:
+    case AST_TYPE_MUL:
+    case AST_TYPE_DIV:
       r_first_value = ResolveExpress(head->first_child);
       r_second_value = ResolveExpress(head->first_child->brother_next);
       r_result = getRegister();
-      tmp_list = create_operation_list_node(OP_ADD, NULL);
+      tmp_list = create_operation_list_node(getOpFromType(head_type), NULL);
       (tmp_list->op->left_ops)[0] = r_first_value;
       (tmp_list->op->left_ops)[1] = r_second_value;
       (tmp_list->op->right_ops)[0] = r_result;

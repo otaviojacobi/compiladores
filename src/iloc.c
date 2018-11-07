@@ -180,3 +180,12 @@ operation_list_t* create_operation_list_node(int code, char *label) {
   op_list->next = NULL;
   return op_list;
 }
+
+int getOpFromType(int type) {
+  switch(type) {
+    case AST_TYPE_ADD: return OP_ADD;
+    case AST_TYPE_MUL: return OP_MULT;
+    case AST_TYPE_DIV: return OP_DIV;
+    case AST_TYPE_SUB: return OP_SUB;
+  }
+}
