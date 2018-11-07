@@ -188,7 +188,7 @@ programa: programa_rec {
   arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); 
   InsertChild(arvore, $1);
   local_desloc = 0;
-  GenerateCode($1);
+  GenerateCode(arvore);
 
   print_op_list(code_list);
 }
@@ -1844,7 +1844,12 @@ void GenerateCode(tree_node_t* head) {
 
   switch(((valor_lexico_t*)head->value)->type) {
     case AST_TYPE_PROGRAM_START:  //OK
+
       head = head->first_child;
+      while(((valor_lexico_t*)head->value)->type != AST_TYPE_FUNCTION) {
+        printf("HELOOUU %d\n", ((valor_lexico_t*)head->value)->type);
+        head = head->brother_next;
+      }
       GenerateCode(head);
       break;
 
