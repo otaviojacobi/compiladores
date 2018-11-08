@@ -2052,8 +2052,17 @@ int ResolveExpress(tree_node_t *head) {
     case AST_TYPE_GE:
     case AST_TYPE_EQ:
     case AST_TYPE_NE:
+    case AST_TYPE_NEGATIVE:
+
       r_first_value = ResolveExpress(head->first_child);
-      r_second_value = ResolveExpress(head->first_child->brother_next);
+
+      if(head_type == AST_TYPE_NEGATIVE) {
+        r_second_value = r_first_value;
+        r_first_value = 0;
+      } else {
+        r_second_value = ResolveExpress(head->first_child->brother_next);
+      }
+
       r_result = getRegister();
       tmp_list = create_operation_list_node(getOpFromType(head_type), -1);
       (tmp_list->op->left_ops)[0] = r_first_value;
@@ -2062,7 +2071,6 @@ int ResolveExpress(tree_node_t *head) {
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
-
       return r_result;
     break;
 

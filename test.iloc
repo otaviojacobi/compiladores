@@ -4,17 +4,14 @@ loadI 1 => r2
 storeAI r2 => rfp, 0
 loadI 2 => r3
 storeAI r3 => rfp, 4
-loadI 3 => r4
-loadAI rfp, 4 => r5
-loadAI rfp, 0 => r6
-add r5, r6 => r7
-cmp_NE r4, r7 => r8
-cbr r8 -> L1, L2
+loadI 1 => r4
+sub r0, r4 => r5
+cbr r5 -> L1, L2
 L1: 
-loadI 10 => r9
-storeAI r9 => rbss, 0
+loadI 10 => r6
+storeAI r6 => rbss, 0
 jumpI -> L3
 L2: 
-loadI 5 => r10
-storeAI r10 => rbss, 0
+loadI 5 => r7
+storeAI r7 => rbss, 0
 L3: 

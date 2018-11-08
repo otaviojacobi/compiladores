@@ -4,7 +4,7 @@ int main() {
   int i <= 1;
   int j <= 2;
   
-  if( 3 != j+i ) then {
+  if( -1 ) then {
     a = 10;
   } else {
     a = 5;
