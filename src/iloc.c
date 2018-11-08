@@ -106,6 +106,8 @@ void print_op(operation_t *op) {
     case OP_STOREAI:
       if((op->right_ops)[0] == -1)
         printf("storeAI r%d => rfp, %d\n", (op->left_ops)[0], (op->right_ops)[1]);
+      else if((op->right_ops)[0] == -2)
+        printf("storeAI r%d => rbss, %d\n", (op->left_ops)[0], (op->right_ops)[1]); 
       else
         printf("storeAI r%d => r%d, %d\n", (op->left_ops)[0], (op->right_ops)[0], (op->right_ops)[1]);
       break;

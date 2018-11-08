@@ -34,6 +34,7 @@
   token_type_t return_type;
   char *func_return_type_name;
   int local_desloc;
+  int global_desloc;
 
 
   int yylex(void);
@@ -187,7 +188,7 @@
 programa: programa_rec {
   arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); 
   InsertChild(arvore, $1);
-  local_desloc = 0;
+  local_desloc = global_desloc = 0;
   GenerateCode(arvore);
 
   print_op_list(code_list);
@@ -1847,10 +1848,39 @@ void GenerateCode(tree_node_t* head) {
 
       head = head->first_child;
       while(((valor_lexico_t*)head->value)->type != AST_TYPE_FUNCTION) {
-        printf("HELOOUU %d\n", ((valor_lexico_t*)head->value)->type);
-        head = head->brother_next;
+        if(((valor_lexico_t*)head->value)->type == AST_TYPE_GLOBAL_VAR) GenerateCode(head);
+        head = head->last_child;
       }
       GenerateCode(head);
+      break;
+
+    case AST_TYPE_GLOBAL_VAR:
+      decl_name = ((valor_lexico_t*)head->first_child->value)->value.stringValue;
+      st = _find_item(&outer_table, decl_name);
+
+      if(st == NULL) quit(ERR_UNDECLARED, "This error should never happen\n");
+
+      new_register = getRegister();
+      st->register_or_label = new_register;
+
+      tmp_list = create_operation_list_node(OP_LOADI, NULL);
+      (tmp_list->op->left_ops)[0] = 0;
+      (tmp_list->op->right_ops)[0] = new_register;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(OP_STOREAI, NULL);
+      (tmp_list->op->left_ops)[0] = new_register;
+      (tmp_list->op->right_ops)[0] = -2;
+      (tmp_list->op->right_ops)[1] = global_desloc;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      st->item->var_offset=global_desloc;
+      global_desloc += 4;
+
       break;
 
     case AST_TYPE_FUNCTION:
