@@ -1840,8 +1840,12 @@ void GenerateCode(tree_node_t* head) {
   valor_lexico_t* vl;
   int result;
 
+  int label1;
+  int label2;
+  int label3;
+
   if(code_list == NULL) {
-    code_list = create_operation_list_node(OP_NOP, NULL);
+    code_list = create_operation_list_node(OP_NOP, -1);
     code_list_aux = code_list;
     code_list->next = NULL;
   }
@@ -1866,14 +1870,14 @@ void GenerateCode(tree_node_t* head) {
       new_register = getRegister();
       st->register_or_label = new_register;
 
-      tmp_list = create_operation_list_node(OP_LOADI, NULL);
+      tmp_list = create_operation_list_node(OP_LOADI, -1);
       (tmp_list->op->left_ops)[0] = 0;
       (tmp_list->op->right_ops)[0] = new_register;
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
-      tmp_list = create_operation_list_node(OP_STOREAI, NULL);
+      tmp_list = create_operation_list_node(OP_STOREAI, -1);
       (tmp_list->op->left_ops)[0] = new_register;
       (tmp_list->op->right_ops)[0] = -2;
       (tmp_list->op->right_ops)[1] = global_desloc;
@@ -1900,14 +1904,14 @@ void GenerateCode(tree_node_t* head) {
       new_register = getRegister();
       st->register_or_label = new_register;
 
-      tmp_list = create_operation_list_node(OP_LOADI, NULL);
+      tmp_list = create_operation_list_node(OP_LOADI, -1);
       (tmp_list->op->left_ops)[0] = st->item->init_value.intValue;
       (tmp_list->op->right_ops)[0] = new_register;
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
-      tmp_list = create_operation_list_node(OP_STOREAI, NULL);
+      tmp_list = create_operation_list_node(OP_STOREAI, -1);
       (tmp_list->op->left_ops)[0] = new_register;
       (tmp_list->op->right_ops)[0] = -1;
       (tmp_list->op->right_ops)[1] = local_desloc;
@@ -1933,10 +1937,54 @@ void GenerateCode(tree_node_t* head) {
 
       result = ResolveExpress(head->first_child->brother_next);
 
-      tmp_list = create_operation_list_node(OP_STOREAI, NULL);
+      tmp_list = create_operation_list_node(OP_STOREAI, -1);
       (tmp_list->op->left_ops)[0] = result;
       (tmp_list->op->right_ops)[0] = st->item->is_global ? -2 : -1;
       (tmp_list->op->right_ops)[1] = st->item->var_offset;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      break;
+
+    case AST_TYPE_IF_ELSE:
+
+      label1 = getLabel();
+      label2 = getLabel();
+      label3 = getLabel();
+
+      result  = ResolveExpress(head->first_child);
+
+      tmp_list = create_operation_list_node(OP_CBR, -1);
+      (tmp_list->op->left_ops)[0] = result;
+      (tmp_list->op->right_ops)[0] = label1;
+      (tmp_list->op->right_ops)[1] = label2;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label1);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      GenerateCode(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(OP_JUMPI, -1);
+      (tmp_list->op->right_ops)[0] = label3;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      if(head->first_child->brother_next->brother_next != NULL) {
+        tmp_list = create_operation_list_node(LABEL, label2);
+        code_list_aux->next = tmp_list;
+        code_list_aux = tmp_list;
+        code_list_aux->next = NULL;
+        GenerateCode(head->first_child->brother_next->brother_next);
+      }
+
+      tmp_list = create_operation_list_node(LABEL, label3);
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
@@ -1971,7 +2019,7 @@ int ResolveExpress(tree_node_t *head) {
 
       if(st == NULL) quit(ERR_UNDECLARED, "This error shall never happen\n");
 
-      tmp_list = create_operation_list_node(OP_LOADAI, NULL);
+      tmp_list = create_operation_list_node(OP_LOADAI, -1);
       (tmp_list->op->left_ops)[0] = st->item->is_global ? -2 : -1;
       (tmp_list->op->left_ops)[1] = st->item->var_offset;
       new_register = getRegister();
@@ -1984,7 +2032,8 @@ int ResolveExpress(tree_node_t *head) {
     break;
 
     case AST_TYPE_LITERAL_INT:
-      tmp_list = create_operation_list_node(OP_LOADI, NULL);
+
+      tmp_list = create_operation_list_node(OP_LOADI, -1);
       new_register = getRegister();
       (tmp_list->op->left_ops)[0] = ((valor_lexico_t *)head->value)->value.intValue;
       (tmp_list->op->right_ops)[0] = new_register;
@@ -1997,10 +2046,16 @@ int ResolveExpress(tree_node_t *head) {
     case AST_TYPE_SUB:
     case AST_TYPE_MUL:
     case AST_TYPE_DIV:
+    case AST_TYPE_LS:
+    case AST_TYPE_LE:
+    case AST_TYPE_GR:
+    case AST_TYPE_GE:
+    case AST_TYPE_EQ:
+    case AST_TYPE_NE:
       r_first_value = ResolveExpress(head->first_child);
       r_second_value = ResolveExpress(head->first_child->brother_next);
       r_result = getRegister();
-      tmp_list = create_operation_list_node(getOpFromType(head_type), NULL);
+      tmp_list = create_operation_list_node(getOpFromType(head_type), -1);
       (tmp_list->op->left_ops)[0] = r_first_value;
       (tmp_list->op->left_ops)[1] = r_second_value;
       (tmp_list->op->right_ops)[0] = r_result;

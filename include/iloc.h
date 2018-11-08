@@ -48,6 +48,7 @@
 #define OP_CMP_GE       44
 #define OP_CMP_GT       45
 #define OP_CMP_NE       46
+#define LABEL           47
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +57,7 @@
 
 typedef struct operation {
   int code;
-  char *label;
+  int label;
   int left_ops[2];
   int right_ops[2];
 } operation_t;
@@ -70,7 +71,7 @@ typedef struct operation_list {
 int getLabel();
 int getRegister();
 void print_op_list(operation_list_t *iloc_list);
-operation_list_t* create_operation_list_node(int code, char *label);
+operation_list_t* create_operation_list_node(int code, int label);
 int getOpFromType(int type);
 
 #endif

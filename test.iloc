@@ -1,28 +1,20 @@
 loadI 0 => r1
 storeAI r1 => rbss, 0
-loadI 0 => r2
-storeAI r2 => rbss, 4
-loadI 0 => r3
-storeAI r3 => rbss, 8
-loadI 1 => r4
-storeAI r4 => rfp, 0
-loadI 2 => r5
-storeAI r5 => rfp, 4
-loadAI rfp, 4 => r6
-loadAI rfp, 4 => r7
-mult r6, r7 => r8
-loadAI rfp, 4 => r9
-loadAI rfp, 0 => r10
-sub r9, r10 => r11
-add r8, r11 => r12
-loadAI rfp, 4 => r13
-div r12, r13 => r14
-loadAI rfp, 4 => r15
-loadAI rfp, 4 => r16
-mult r15, r16 => r17
-add r14, r17 => r18
-storeAI r18 => rbss, 8
-loadI 13 => r19
-loadAI rfp, 4 => r20
-mult r19, r20 => r21
-storeAI r21 => rbss, 4
+loadI 1 => r2
+storeAI r2 => rfp, 0
+loadI 2 => r3
+storeAI r3 => rfp, 4
+loadI 3 => r4
+loadAI rfp, 4 => r5
+loadAI rfp, 0 => r6
+add r5, r6 => r7
+cmp_NE r4, r7 => r8
+cbr r8 -> L1, L2
+L1: 
+loadI 10 => r9
+storeAI r9 => rbss, 0
+jumpI -> L3
+L2: 
+loadI 5 => r10
+storeAI r10 => rbss, 0
+L3: 

@@ -1,12 +1,13 @@
 a int;
-b int;
-c int;
 
 int main() {
   int i <= 1;
   int j <= 2;
   
-  c = (j*j + (j-i) )/j + j*j;
+  if( 3 != j+i ) then {
+    a = 10;
+  } else {
+    a = 5;
+  };
 
-  b = 13 * j;
 }

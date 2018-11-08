@@ -136,13 +136,13 @@ void print_op(operation_t *op) {
       printf("i2c r%d => r%d\n", (op->left_ops)[0], (op->right_ops)[0]);
       break;
     case OP_JUMPI:
-      printf("jumpi -> L%d\n", (op->right_ops)[0]);
+      printf("jumpI -> L%d\n", (op->right_ops)[0]);
       break;
     case OP_JUMP:
       printf("jump -> r%d\n", (op->right_ops)[0]);
       break;
     case OP_CBR:
-      printf("cbr r%d -> L%d, L%d\n", (op->left_ops)[0], (op->left_ops)[1], (op->right_ops)[0]);
+      printf("cbr r%d -> L%d, L%d\n", (op->left_ops)[0], (op->right_ops)[0], (op->right_ops)[1]);
       break;
     case OP_CMP_LT:
       printf("cmp_LT r%d, r%d => r%d\n", (op->left_ops)[0], (op->left_ops)[1], (op->right_ops)[0]);
@@ -162,6 +162,8 @@ void print_op(operation_t *op) {
     case OP_CMP_NE:
       printf("cmp_NE r%d, r%d => r%d\n", (op->left_ops)[0], (op->left_ops)[1], (op->right_ops)[0]);  
       break;
+    case LABEL:
+      printf("L%d: \n", op->label);
   }
 }
 
@@ -173,7 +175,7 @@ void print_op_list(operation_list_t *iloc_list) {
   }
 }
 
-operation_list_t* create_operation_list_node(int code, char *label) {
+operation_list_t* create_operation_list_node(int code, int label) {
   operation_list_t* op_list = (operation_list_t*)malloc(sizeof(operation_list_t));
   operation_t* op = (operation_t*)malloc(sizeof(operation_t));
   op->code = code;
@@ -189,5 +191,12 @@ int getOpFromType(int type) {
     case AST_TYPE_MUL: return OP_MULT;
     case AST_TYPE_DIV: return OP_DIV;
     case AST_TYPE_SUB: return OP_SUB;
+    case AST_TYPE_LS: return OP_CMP_LT;
+    case AST_TYPE_LE: return OP_CMP_LE;
+    case AST_TYPE_GR: return OP_CMP_GT;
+    case AST_TYPE_GE: return OP_CMP_GE;
+    case AST_TYPE_EQ: return OP_CMP_EQ;
+    case AST_TYPE_NE: return OP_CMP_NE;
+
   }
 }
