@@ -5,7 +5,8 @@ c int;
 int main() {
   int i <= 1;
   int j <= 2;
-  int k;
   
-  k = (j*j + (j-i) )/j + j*j;
+  c = (j*j + (j-i) )/j + j*j;
+
+  b = 13 * j;
 }

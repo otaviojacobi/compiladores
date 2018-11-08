@@ -874,6 +874,7 @@ std_type TK_IDENTIFICADOR {
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
+  item->is_global = 0;
   if(add_item(tables, value.stringValue, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", value.stringValue, "has already been declared");
     quit(ERR_DECLARED, err_msg);
@@ -1714,6 +1715,8 @@ void create_global_value( valor_lexico_t *first, tree_node_t *second, int is_vec
     create_table_item(item, get_line_number(), NATUREZA_GLOBAL_VAR, type, get_type_size(type, first->value.stringValue), NULL, first->value, 0, 0, is_vector); //TODO: discover last 3 values from tree
   }
 
+  item->is_global = 1;
+
   if(add_item(tables, identifier, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
     quit(ERR_DECLARED, err_msg);
@@ -1932,7 +1935,7 @@ void GenerateCode(tree_node_t* head) {
 
       tmp_list = create_operation_list_node(OP_STOREAI, NULL);
       (tmp_list->op->left_ops)[0] = result;
-      (tmp_list->op->right_ops)[0] = -1;
+      (tmp_list->op->right_ops)[0] = st->item->is_global ? -2 : -1;
       (tmp_list->op->right_ops)[1] = st->item->var_offset;
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
@@ -1969,7 +1972,7 @@ int ResolveExpress(tree_node_t *head) {
       if(st == NULL) quit(ERR_UNDECLARED, "This error shall never happen\n");
 
       tmp_list = create_operation_list_node(OP_LOADAI, NULL);
-      (tmp_list->op->left_ops)[0] = -1;
+      (tmp_list->op->left_ops)[0] = st->item->is_global ? -2 : -1;
       (tmp_list->op->left_ops)[1] = st->item->var_offset;
       new_register = getRegister();
       (tmp_list->op->right_ops)[0] = new_register;
@@ -1980,6 +1983,16 @@ int ResolveExpress(tree_node_t *head) {
       return new_register;
     break;
 
+    case AST_TYPE_LITERAL_INT:
+      tmp_list = create_operation_list_node(OP_LOADI, NULL);
+      new_register = getRegister();
+      (tmp_list->op->left_ops)[0] = ((valor_lexico_t *)head->value)->value.intValue;
+      (tmp_list->op->right_ops)[0] = new_register;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+      return new_register;
+      break;
     case AST_TYPE_ADD:
     case AST_TYPE_SUB:
     case AST_TYPE_MUL:

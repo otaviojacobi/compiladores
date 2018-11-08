@@ -29,6 +29,7 @@ typedef struct symbol_table_item {
     int is_const;
     int is_static;
     int is_vector;
+    int is_global;
 } symbol_table_item_t;
 
 typedef struct symbol_table {
