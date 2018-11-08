@@ -1,13 +1,21 @@
 a int;
+LIM int;
 
-int main() {
+int fibonacci() {
   int i <= 1;
-  int j <= 2;
+  int j <= 1;
+  int counter <= 2;
+  int aux;
   
-  if( -1 ) then {
-    a = 10;
-  } else {
-    a = 5;
+
+  LIM = 7;
+  while (counter < LIM) do {
+    aux = i + j;
+    i = j;
+    j = aux;
+    counter = counter + 1;
   };
+
+  a = j;
 
 }

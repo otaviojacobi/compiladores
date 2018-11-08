@@ -1859,7 +1859,7 @@ void GenerateCode(tree_node_t* head) {
         head = head->last_child;
       }
       GenerateCode(head);
-      break;
+    break;
 
     case AST_TYPE_GLOBAL_VAR:
       decl_name = ((valor_lexico_t*)head->first_child->value)->value.stringValue;
@@ -1888,11 +1888,11 @@ void GenerateCode(tree_node_t* head) {
       st->item->var_offset=global_desloc;
       global_desloc += 4;
 
-      break;
+    break;
 
     case AST_TYPE_FUNCTION:
       GenerateCode(head->first_child->brother_next);
-      break;
+    break;
 
     case AST_TYPE_DECLR:
     
@@ -1922,11 +1922,11 @@ void GenerateCode(tree_node_t* head) {
       st->item->var_offset=local_desloc;
       local_desloc += 4;
 
-      break;
+    break;
 
     case AST_TYPE_COMMAND_BLOCK:
       GenerateCode(head->first_child);
-      break;
+    break;
 
     case AST_TYPE_ATTRIBUTION:
       decl_name = ((valor_lexico_t*)head->first_child->value)->value.stringValue;
@@ -1945,7 +1945,7 @@ void GenerateCode(tree_node_t* head) {
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
-      break;
+    break;
 
     case AST_TYPE_IF_ELSE:
 
@@ -1989,12 +1989,53 @@ void GenerateCode(tree_node_t* head) {
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
-      break;
+    break;
 
+    case AST_TYPE_WHILE_DO:
+
+      label1 = getLabel();
+      label2 = getLabel();
+      label3 = getLabel();
+
+      tmp_list = create_operation_list_node(LABEL, label1);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      result  = ResolveExpress(head->first_child);
+
+      tmp_list = create_operation_list_node(OP_CBR, -1);
+      (tmp_list->op->left_ops)[0] = result;
+      (tmp_list->op->right_ops)[0] = label2;
+      (tmp_list->op->right_ops)[1] = label3;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label2);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      GenerateCode(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(OP_JUMPI, -1);
+      (tmp_list->op->right_ops)[0] = label1;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label3);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+
+    break;
     case AST_TYPE_COMMAND:
       for(tree_node_t* itr=head->first_child; itr; itr = itr->brother_next)
         GenerateCode(itr);
-      break;
+    break;
 
     default:
       printf("\n%d\n", ((valor_lexico_t*)head->value)->type);

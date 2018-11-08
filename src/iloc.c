@@ -85,6 +85,8 @@ void print_op(operation_t *op) {
     case OP_LOADAI:
       if((op->left_ops)[0] == -1)
         printf("loadAI rfp, %d => r%d\n", (op->left_ops)[1], (op->right_ops)[0]);
+      else if((op->left_ops)[0] == -2)
+        printf("loadAI rbss, %d => r%d\n", (op->left_ops)[1], (op->right_ops)[0]);
       else
         printf("loadAI r%d, %d => r%d\n", (op->left_ops)[0], (op->left_ops)[1], (op->right_ops)[0]);
       break;
