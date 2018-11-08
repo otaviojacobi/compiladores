@@ -2032,6 +2032,34 @@ void GenerateCode(tree_node_t* head) {
 
 
     break;
+    case AST_TYPE_DO_WHILE:
+
+      label1 = getLabel();
+      label2 = getLabel();
+
+      tmp_list = create_operation_list_node(LABEL, label1);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      GenerateCode(head->first_child);
+
+      result  = ResolveExpress(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(OP_CBR, -1);
+      (tmp_list->op->left_ops)[0] = result;
+      (tmp_list->op->right_ops)[0] = label1;
+      (tmp_list->op->right_ops)[1] = label2;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label2);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+    break;
     case AST_TYPE_COMMAND:
       for(tree_node_t* itr=head->first_child; itr; itr = itr->brother_next)
         GenerateCode(itr);
