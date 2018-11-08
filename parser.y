@@ -1859,7 +1859,7 @@ void GenerateCode(tree_node_t* head) {
 
     case AST_TYPE_GLOBAL_VAR:
       decl_name = ((valor_lexico_t*)head->first_child->value)->value.stringValue;
-      st = _find_item(&outer_table, decl_name);
+      st = find_item(tables, decl_name);
 
       if(st == NULL) quit(ERR_UNDECLARED, "This error should never happen\n");
 
