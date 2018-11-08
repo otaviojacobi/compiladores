@@ -190,8 +190,8 @@ programa: programa_rec {
   InsertChild(arvore, $1);
   local_desloc = global_desloc = 0;
   GenerateCode(arvore);
-
   print_op_list(code_list);
+  printf("halt\n");
 }
 ;
 
@@ -1838,7 +1838,7 @@ void GenerateCode(tree_node_t* head) {
   int new_register;
   operation_list_t *tmp_list = NULL;
   valor_lexico_t* vl;
-  int result;
+  int result, result_aux;
 
   int label1;
   int label2;
@@ -1976,11 +1976,12 @@ void GenerateCode(tree_node_t* head) {
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
+      tmp_list = create_operation_list_node(LABEL, label2);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
       if(head->first_child->brother_next->brother_next != NULL) {
-        tmp_list = create_operation_list_node(LABEL, label2);
-        code_list_aux->next = tmp_list;
-        code_list_aux = tmp_list;
-        code_list_aux->next = NULL;
         GenerateCode(head->first_child->brother_next->brother_next);
       }
 
@@ -2065,6 +2066,34 @@ void GenerateCode(tree_node_t* head) {
         GenerateCode(itr);
     break;
 
+    case AST_TYPE_SR:
+    case AST_TYPE_SL:
+
+      st = find_item(tables, ((valor_lexico_t*)(head->first_child->value))->value.stringValue);
+
+      if(st == NULL) quit(ERR_UNDECLARED, "This error shall never happen\n");
+
+      result = ResolveExpress(head->first_child);
+      result_aux = ResolveExpress(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(getOpFromType(((valor_lexico_t*)head->value)->type) , -1);
+      (tmp_list->op->left_ops)[0] = result;
+      (tmp_list->op->left_ops)[1] = result_aux;
+      (tmp_list->op->right_ops)[0] = result;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(OP_STOREAI, -1);
+      (tmp_list->op->left_ops)[0] = result;
+      (tmp_list->op->right_ops)[0] = st->item->is_global ? -2 : -1;
+      (tmp_list->op->right_ops)[1] = st->item->var_offset;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+      ResolveExpress(head);
+    break;
+
     default:
       printf("\n%d\n", ((valor_lexico_t*)head->value)->type);
       quit(ERR_NOT_IMPLEMENTED, "Not implemented.");
@@ -2080,6 +2109,8 @@ int ResolveExpress(tree_node_t *head) {
   int r_first_value;
   int r_second_value;
   int r_result;
+
+  int label1, label2, label3;
 
   switch(head_type) {
     
@@ -2110,7 +2141,7 @@ int ResolveExpress(tree_node_t *head) {
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
       return new_register;
-      break;
+    break;
     case AST_TYPE_ADD:
     case AST_TYPE_SUB:
     case AST_TYPE_MUL:
@@ -2122,7 +2153,6 @@ int ResolveExpress(tree_node_t *head) {
     case AST_TYPE_EQ:
     case AST_TYPE_NE:
     case AST_TYPE_NEGATIVE:
-
       r_first_value = ResolveExpress(head->first_child);
 
       if(head_type == AST_TYPE_NEGATIVE) {
@@ -2143,6 +2173,105 @@ int ResolveExpress(tree_node_t *head) {
       return r_result;
     break;
 
+    // short-circuit'ed
+    case AST_TYPE_OR:
+
+      label1 = getLabel();
+      label2 = getLabel();
+      r_result = getRegister();
+
+      r_first_value = ResolveExpress(head->first_child);
+
+      tmp_list = create_operation_list_node(OP_CBR, -1);
+      (tmp_list->op->left_ops)[0] = r_first_value;
+      (tmp_list->op->right_ops)[0] = label2;
+      (tmp_list->op->right_ops)[1] = label1;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label1);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      r_second_value = ResolveExpress(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(LABEL, label2);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+      
+      tmp_list = create_operation_list_node(OP_OR, -1);
+      (tmp_list->op->left_ops)[0] = r_first_value;
+      (tmp_list->op->left_ops)[1] = r_second_value;
+      (tmp_list->op->right_ops)[0] = r_result;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      return r_result;
+
+    break;
+
+    // short-circuit'ed
+    case AST_TYPE_AND:
+      label1 = getLabel();
+      label2 = getLabel();
+      label3 = getLabel();
+      r_result = getRegister();
+
+      r_first_value = ResolveExpress(head->first_child);
+
+      tmp_list = create_operation_list_node(OP_CBR, -1);
+      (tmp_list->op->left_ops)[0] = r_first_value;
+      (tmp_list->op->right_ops)[0] = label1;
+      (tmp_list->op->right_ops)[1] = label2;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label1);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      r_second_value = ResolveExpress(head->first_child->brother_next);
+
+      tmp_list = create_operation_list_node(OP_JUMPI, -1);
+      (tmp_list->op->right_ops)[0] = label3;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label2);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(OP_LOADI, -1);
+      (tmp_list->op->left_ops)[0] = 1;
+      (tmp_list->op->right_ops)[0] = r_second_value;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(LABEL, label3);
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+      
+      tmp_list = create_operation_list_node(OP_AND, -1);
+      (tmp_list->op->left_ops)[0] = r_first_value;
+      (tmp_list->op->left_ops)[1] = r_second_value;
+      (tmp_list->op->right_ops)[0] = r_result;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      return r_result;
+
+    break;
     default: return -1;
 
   }

@@ -200,6 +200,9 @@ int getOpFromType(int type) {
     case AST_TYPE_EQ: return OP_CMP_EQ;
     case AST_TYPE_NE: return OP_CMP_NE;
     case AST_TYPE_NEGATIVE: return OP_SUB;
+    case AST_TYPE_SL: return OP_LSHIFT;
+    case AST_TYPE_SR: return OP_RSHIFT;
+
 
   }
 }

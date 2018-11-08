@@ -1,21 +1,9 @@
 a int;
-LIM int;
 
-int fibonacci() {
-  int i <= 1;
-  int j <= 1;
-  int counter <= 2;
-  int aux;
+int main() {
+  
+  a = 4;
 
-
-  LIM = 7;
-  do {
-    aux = i + j;
-    i = j;
-    j = aux;
-    counter = counter + 1;
-  } while (counter < LIM);
-
-  a = j;
+  a >> 1;
 
 }
