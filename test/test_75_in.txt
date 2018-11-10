@@ -7,12 +7,12 @@ int main() {
   int n2 <= 12;
   int resto;
 
-  resto = n1 - n1 / n2 * n2;
+  resto = n1 - ((n1 / n2) * n2);
 
   while (resto != 0) do {
     n1 = n2;
     n2 = resto;
-    resto = n1 - n1 / n2 * n2;
+    resto = n1 - ((n1 / n2) * n2);
   };
 
   mdc = n2;

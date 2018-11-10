@@ -4,6 +4,7 @@ int main() {
   int j <= 3;
   int k <= 12;
 
+  //Shall be shortcutted
   if (j == 4 && k == 12) then {
     i = 1;
   }

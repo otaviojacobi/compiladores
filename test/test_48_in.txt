@@ -4,7 +4,7 @@ int main() {
   int j <= 3;
   int k <= 12;
 
-  if (j == 3 && false && k == 12) then {
+  if (j == 3 && 0 && k == 12) then {
     i = 1;
   }
   else {
