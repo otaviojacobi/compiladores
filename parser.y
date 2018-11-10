@@ -188,9 +188,11 @@
 programa: programa_rec {
   arvore = MakeNode(AST_TYPE_PROGRAM_START, NULL); 
   InsertChild(arvore, $1);
-  local_desloc = global_desloc = 0;
-  GenerateCode(arvore);
-  print_op_list(code_list);
+  if( ((valor_lexico_t*)arvore->first_child->value)->type != AST_TYPE_NULL ) {
+    local_desloc = global_desloc = 0;
+    GenerateCode(arvore);
+    print_op_list(code_list);
+  }
   printf("halt\n");
 }
 ;
@@ -198,7 +200,7 @@ programa: programa_rec {
 programa_rec:  new_type_decl programa_rec  { InsertChild($1, $2); $$ = $1; }
              | global_var_decl programa_rec  {  InsertChild($1, $2); $$ = $1; }
              | func programa_rec { InsertChild($1, $2); $$ = $1; }
-             | %empty { $$ = MakeNode(AST_TYPE_NULL, NULL); }
+             | %empty { $$ = MakeNode(AST_TYPE_NULL, NULL);}
 ;
 
 std_type: std_type_node { $$ = $1; };

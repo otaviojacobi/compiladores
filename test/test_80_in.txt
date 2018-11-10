@@ -1,0 +1,17 @@
+test int;
+
+//factorial
+int main() {
+
+  int n <= 6;
+  int result <= 1;
+
+  while(n > 0) do {
+    result = result * n;
+    n = n - 1;
+  };
+
+  test = result;
+
+  return 0;
+}
