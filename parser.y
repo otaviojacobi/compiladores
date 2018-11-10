@@ -2094,6 +2094,9 @@ void GenerateCode(tree_node_t* head) {
       ResolveExpress(head);
     break;
 
+    case AST_TYPE_RETURN:
+      break;
+
     default:
       printf("\n%d\n", ((valor_lexico_t*)head->value)->type);
       quit(ERR_NOT_IMPLEMENTED, "Not implemented.");

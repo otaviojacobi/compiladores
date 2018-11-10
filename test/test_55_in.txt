@@ -1,0 +1,12 @@
+i int;
+
+int main() {
+  if (0 || 1) then {
+    i = 1;
+  }
+  else {
+    i = 2;
+  };
+
+  return 0;
+}

@@ -1,0 +1,15 @@
+i int;
+
+int main() {
+  int j <= 3;
+  int k <= 12;
+
+  if ((k <= 12 || k >= 12) && j == 4) then {
+    i = 1;
+  }
+  else {
+    i = 2;
+  };
+
+  return 0;
+}

@@ -1,17 +1,17 @@
 #!/bin/bash
 
-PROGRAM='etapa4'
+PROGRAM='etapa5'
+ILOCSIM='ilocsim.py'
 
 RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
+GREEN='\033[0;32m' 
 NO_COLOR='\033[0m'
 
 clear
 
 echo "Compiling..."
 make clean
-COMPILATION_LOG="$(make 2>&1)"
+COMPILATION_LOG=$(make 2>&1)
 
 COMPILATION_WARN=0
 
@@ -24,81 +24,39 @@ if echo $COMPILATION_LOG | grep -q ".y: warning"; then
     echo -ne $NO_COLOR
 fi
 
-declare -A errors
-errors=(
-["ERR_UNDECLARED"]=10
-["ERR_DECLARED"]=11
-["ERR_VARIABLE"]=20
-["ERR_VECTOR"]=21
-["ERR_FUNCTION"]=22
-["ERR_USER"]=23
-["ERR_WRONG_TYPE"]=30
-["ERR_STRING_TO_X"]=31
-["ERR_CHAR_TO_X"]=32
-["ERR_USER_TO_X"]=33
-["ERR_MISSING_ARGS"]=40
-["ERR_EXCESS_ARGS"]=41
-["ERR_WRONG_TYPE_ARGS"]=42
-["ERR_WRONG_PAR_INPUT"]=50
-["ERR_WRONG_PAR_OUTPUT"]=51
-["ERR_WRONG_PAR_RETURN"]=52
-)
 
 echo -e "\nRunning tests..."
 TESTS_PASSED=0
-VALGRINDS_PASSED=0
 TOTAL_TESTS=0
-for TEST_FILE in $(ls test/); do
+for TEST_FILE in test/*_in.txt; do
     # build needed paths
-    result=$(cat test/$TEST_FILE | grep ERR_)
-    ./$PROGRAM < test/$TEST_FILE > /dev/null
-    PROGRAM_RESULT=$?
+    EXPECTED_FILE=${TEST_FILE//_in/_expected}
+    DIFF_FILE=${TEST_FILE//_in/_diff}
+    ILOC_FILE=${TEST_FILE//_in/_iloc}
+    MEM_FILE=${TEST_FILE//_in/_mem}
 
-    val_res=$(valgrind ./$PROGRAM < test/$TEST_FILE 2>&1)
-    $(echo $val_res | grep "ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)" > /dev/null)
-    val_res=$?
-    if [ -z "$result" ]; then
-        EXPECTED_RESULT=0
-    else 
-        result="$(echo "${result:2}" | tr -d '[:space:]')"
-        EXPECTED_RESULT="${errors[$result]}"
-    fi
+    # run the tests
+    $(./$PROGRAM < $TEST_FILE > $ILOC_FILE 2>&1)
+    $(./$ILOCSIM -m $ILOC_FILE > $MEM_FILE 2>&1)
+    $(diff -ws $MEM_FILE $EXPECTED_FILE > $DIFF_FILE)
 
-    if [[ "$PROGRAM_RESULT" = "$EXPECTED_RESULT" ]]; then
+    # inform test results
+    if grep -q "are identical" $DIFF_FILE; then
         echo -ne $GREEN
         echo "TEST" \"$TEST_FILE\"": OK"
         echo -ne $NO_COLOR
         TESTS_PASSED=$((TESTS_PASSED + 1))
-
-        if [ $val_res = 0 ]; then
-            echo -ne $GREEN
-            echo "Valgrind OK"
-            echo -ne $NO_COLOR
-        else 
-            echo -ne $RED
-            echo "Valgrind NOK"
-            echo -ne $NO_COLOR
-        fi
     else
         echo -ne $RED
         echo "TEST" \"$TEST_FILE\"": ERROR"
-        echo -ne $YELLOW
-        echo "Was" \"$PROGRAM_RESULT\" "Should be:" \"$EXPECTED_RESULT\"
         echo -ne $NO_COLOR
-        
-        if [ $val_res = 0 ]; then
-            echo -ne $GREEN
-            echo "Valgrind OK"
-            echo -ne $NO_COLOR
-        else 
-            echo -ne $RED
-            echo "Valgrind NOK"
-            echo -ne $NO_COLOR
-        fi
+        echo "Diff:"
+        cat $DIFF_FILE
     fi
-    echo -ne $NO_COLOR
-    TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
+    echo -ne $NO_COLOR
+
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
 done
 
 
@@ -116,18 +74,5 @@ else
 fi
 
 echo $TESTS_PASSED/$TOTAL_TESTS "TESTS PASSED"
+
 echo -ne $NO_COLOR
-
-
-# if [[ $VALGRINDS_PASSED = $TOTAL_TESTS ]]; then
-#     echo -ne $GREEN
-# else
-#     echo -ne $RED
-# fi
-
-# echo -ne $NO_COLOR
-
-
-# echo $VALGRINDS_PASSED/$TOTAL_TESTS "VALGRIND TESTS PASSED"
-
-# echo -ne $NO_COLOR

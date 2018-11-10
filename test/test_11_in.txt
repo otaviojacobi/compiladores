@@ -1,0 +1,9 @@
+i int;
+
+int main() {
+  int j;
+  j = 5;
+  int k <= 3;
+  i = j - k;
+  return 0;
+}

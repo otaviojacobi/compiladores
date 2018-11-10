@@ -1,8 +1,0 @@
-//O comando input somente aceita identificadores de qualquer tipo como parâmetro
-//ERR_UNDECLARED
-int main()
-{
-  int a;
-  input b;
-  return a;
-}

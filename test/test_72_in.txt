@@ -1,0 +1,14 @@
+i int;
+
+int main() {
+  i = 0;
+  int j <= 5;
+  int k <= 12;
+
+  while (j > k) do {
+    i = i + 1;
+    j = j + 3;
+  };
+
+  return 0;
+}

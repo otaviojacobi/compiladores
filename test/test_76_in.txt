@@ -1,0 +1,12 @@
+i int;
+j int;
+
+int main() {
+
+  int i <= 1;
+  int j <= 5;
+
+  j = i + j;
+
+  return 0;
+}

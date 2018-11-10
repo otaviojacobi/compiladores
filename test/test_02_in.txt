@@ -1,0 +1,6 @@
+i int;
+
+int main() {
+  i = 42;
+  return 0;
+}

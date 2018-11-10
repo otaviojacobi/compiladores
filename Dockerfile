@@ -13,3 +13,4 @@ RUN apt-get -y install gcc
 RUN apt-get -y install flex
 RUN apt-get -y install bison
 RUN apt-get -y install valgrind
+RUN apt-get -y install python

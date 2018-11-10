@@ -1,9 +1,0 @@
-loadI 0 => r1
-storeAI r1 => rbss, 0
-loadI 4 => r2
-storeAI r2 => rbss, 0
-loadAI rbss, 0 => r3
-loadI 1 => r4
-rshift r3, r4 => r3
-storeAI r3 => rbss, 0
-halt

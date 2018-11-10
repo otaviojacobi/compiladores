@@ -1,0 +1,8 @@
+i int;
+
+int main() {
+  int j <= 2;
+  int k <= 12;
+  i = 1 + k / j;
+  return 0;
+}

@@ -1,0 +1,8 @@
+i int;
+
+int main() {
+  int j <= 2;
+  int k <= 12;
+  i = (8 + k) / (j + 2);
+  return 0;
+}
