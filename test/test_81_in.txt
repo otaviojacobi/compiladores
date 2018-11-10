@@ -1,0 +1,8 @@
+i int;
+
+int main() {
+  int j <= 13;
+  int k <= 3;
+  i = (j - j) / k * k;
+  return 0;
+}
