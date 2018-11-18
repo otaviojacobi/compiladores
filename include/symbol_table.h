@@ -30,6 +30,7 @@ typedef struct symbol_table_item {
     int is_static;
     int is_vector;
     int is_global;
+    int func_label;
 } symbol_table_item_t;
 
 typedef struct symbol_table {

@@ -15,6 +15,10 @@ void print_op(operation_t *op) {
 
   switch(op->code) {
     case OP_NOP:
+      printf("loadI 1024 => rfp\n");
+      printf("loadI 1044 => rsp\n");
+      printf("loadI 0 => rbss\n");
+      printf("jumpI -> Lmain\n");
       break;
     case OP_ADD:
       printf("add r%d, r%d => r%d\n", (op->left_ops)[0], (op->left_ops)[1], (op->right_ops)[0]);
@@ -166,6 +170,38 @@ void print_op(operation_t *op) {
       break;
     case LABEL:
       printf("L%d: \n", op->label);
+      break;
+    case RSP_OFFSET:
+      printf("storeAI r%d => rsp, %d\n", (op->left_ops)[0], (op->right_ops)[0]);
+      break;
+    case SET_DYN_LINK:
+      printf("storeAI rfp => rsp, %d\n", (op->right_ops)[0]);
+      break;
+    case MOVE_RFP:
+      printf("i2i rsp => rfp\n");
+      break;
+    case MOVE_RSP:
+      printf("addI rsp, %d => rsp\n", (op->left_ops)[0]);
+      break;
+    case LOAD_RPC:
+      printf("i2i rpc => r%d\n", (op->right_ops)[0]);
+      break;
+    case LOAD_RETURN_VALUE:
+      printf("loadAI rsp, %d => r%d\n", (op->left_ops)[0], (op->right_ops)[0]);
+      break;
+    case RETURN:
+      printf("i2i rfp => rsp\n");
+      printf("loadAI rfp, 8 => rfp\n");
+      printf("loadAI rsp, 0 => r%d\n", (op->right_ops)[0]);
+      printf("jump -> r%d\n", (op->right_ops)[0]);
+      break;
+    case FUNCTION_LABEL:
+      printf("L%s: \n", op->func_name);
+      break;
+    case FUNCTION_CALL:
+      printf("jumpI -> L%s\n", op->func_name);
+      break;
+
   }
 }
 

@@ -11,6 +11,10 @@
 
 %{
   #define ERROR_MESSAGE_MAX_LENGTH 200
+  #define BASE_STACK 20
+  #define DYN_LINK_OFFSET 8
+  #define RETURN_VALUE_OFFSET 4
+  #define RETURN_ADDRESS_OFFSET 0
   #define str(x) #x
   #define xstr(x) str(x)
   #include "tree.h"
@@ -53,6 +57,7 @@
   const char* type_to_str(token_type_t tkn);
   token_type_t get_next_dot_proposed_type(tree_node_t* node);
   int ResolveExpress(tree_node_t *head);
+  int length(arg_list_t *l);
 %}
 
 %error-verbose
@@ -550,6 +555,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
           aux_value = st->item->value;
         } else {
           p_create->type = ((valor_lexico_t*)aux->first_child->value)->type;
+		  p_create->field_name = strdup(((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue);
           aux_value = ((valor_lexico_t*)aux->first_child->brother_next->value)->value;
         }
         param_name=((valor_lexico_t*)aux->first_child->brother_next->value)->value.stringValue;
@@ -557,6 +563,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       aux_type = p_create->type;
 
       create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, aux_value.stringValue),NULL, aux_value, is_const, 0, 0);
+      aux_item->var_offset = BASE_STACK+get_type_size(aux_type, aux_value.stringValue)*counter;
 
       if(add_item(tables, param_name, aux_item) == -1){
         sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter", param_name, "has already been declared");
@@ -1893,7 +1900,18 @@ void GenerateCode(tree_node_t* head) {
     break;
 
     case AST_TYPE_FUNCTION:
+      local_desloc=BASE_STACK+4*length(find_item(tables, ((valor_lexico_t*)head->first_child->first_child->brother_next->value)->value.stringValue)->item->arg_list); // local variables are after formal parameters
+      
+
+      tmp_list = create_operation_list_node(FUNCTION_LABEL, -1);
+      tmp_list->op->func_name = ((valor_lexico_t*)head->first_child->first_child->brother_next->value)->value.stringValue;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+
       GenerateCode(head->first_child->brother_next);
+      GenerateCode(head->first_child->brother_next->brother_next);
     break;
 
     case AST_TYPE_DECLR:
@@ -1917,6 +1935,12 @@ void GenerateCode(tree_node_t* head) {
       (tmp_list->op->left_ops)[0] = new_register;
       (tmp_list->op->right_ops)[0] = -1;
       (tmp_list->op->right_ops)[1] = local_desloc;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(MOVE_RSP, -1);
+      (tmp_list->op->left_ops)[0] = 4;
       code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
@@ -2097,7 +2121,27 @@ void GenerateCode(tree_node_t* head) {
     break;
 
     case AST_TYPE_RETURN:
+      tmp_list = create_operation_list_node(OP_STOREAI, -1);
+      (tmp_list->op->left_ops)[0] = ResolveExpress(head->first_child);
+      (tmp_list->op->right_ops)[0] = -1;
+      (tmp_list->op->right_ops)[1] = RETURN_VALUE_OFFSET;
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      tmp_list = create_operation_list_node(RETURN, -1);
+      (tmp_list->op->right_ops)[0] = getRegister();
+      code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;      
+
+      // i2i rfp => rsp
+
+
       break;
+    case AST_TYPE_NULL:
+
+    break;
 
     default:
       printf("\n%d\n", ((valor_lexico_t*)head->value)->type);
@@ -2114,11 +2158,91 @@ int ResolveExpress(tree_node_t *head) {
   int r_first_value;
   int r_second_value;
   int r_result;
+  tree_node_t* aux_tree;
+  int rsp_offset=BASE_STACK;
+  int temp;
 
   int label1, label2, label3;
 
   switch(head_type) {
     
+  	case AST_TYPE_FUNCTION_CALL: 
+  		aux_tree = head->first_child->brother_next->first_child;
+  		while(aux_tree != NULL){
+  			temp = ResolveExpress(aux_tree);
+  			tmp_list = create_operation_list_node(RSP_OFFSET, -1);
+  			(tmp_list->op->left_ops)[0] = temp;
+  			(tmp_list->op->right_ops)[0] = rsp_offset;
+  			// storeAI temp => rsp, rsp_offset 
+  			code_list_aux->next = tmp_list;
+	        code_list_aux = tmp_list;
+	        code_list_aux->next = NULL;
+
+  			rsp_offset += 4;
+	        aux_tree = aux_tree->brother_next;
+  		} 
+  		tmp_list = create_operation_list_node(SET_DYN_LINK, -1);
+  		(tmp_list->op->right_ops)[0] = DYN_LINK_OFFSET;
+  		// storeAI rfp => rsp, 8
+  		code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+
+	    tmp_list = create_operation_list_node(MOVE_RFP, -1);
+	    code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+
+	    tmp_list = create_operation_list_node(MOVE_RSP, -1);
+	    (tmp_list->op->left_ops)[0] = rsp_offset;
+	    // addI rsp, rsp_offset => rsp (MOVE_RSP)
+		code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+  		
+	    tmp_list = create_operation_list_node(LOAD_RPC, -1);
+	    new_register = getRegister();
+	    (tmp_list->op->right_ops)[0] = new_register;
+	    // i2i RPC => RN
+	    code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+
+	    tmp_list = create_operation_list_node(OP_ADDI, -1);
+	    (tmp_list->op->left_ops)[0] = new_register;
+	    (tmp_list->op->left_ops)[1] = 4;
+	    (tmp_list->op->right_ops)[0] = new_register;
+	    code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+
+	    tmp_list = create_operation_list_node(OP_STOREAI, -1);
+	    (tmp_list->op->left_ops)[0] = new_register;
+	    (tmp_list->op->right_ops)[0] = -1; // rfp
+	    (tmp_list->op->right_ops)[1] = RETURN_ADDRESS_OFFSET;
+		code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+
+	    tmp_list = create_operation_list_node(FUNCTION_CALL, -1);
+	    tmp_list->op->func_name = ((valor_lexico_t*)head->first_child->value)->value.stringValue;
+		code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;	    
+
+	    // AFTER RETURNING FROM FUNCTION CALL
+
+	    new_register = getRegister();
+	    tmp_list = create_operation_list_node(LOAD_RETURN_VALUE, -1);
+	  	(tmp_list->op->left_ops)[0] = RETURN_VALUE_OFFSET;
+	    (tmp_list->op->right_ops)[0] = new_register;
+	    code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;
+
+	    return new_register;
+  	break;
+
     case AST_TYPE_IDENTIFICATOR:
       st = find_item(tables, vl->value.stringValue);
 
@@ -2280,4 +2404,10 @@ int ResolveExpress(tree_node_t *head) {
     default: return -1;
 
   }
+}
+
+int length(arg_list_t *l){
+	int i=0;
+	for(; l != NULL; l = l->next) i++;
+	return i;
 }

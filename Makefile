@@ -4,10 +4,10 @@ CFLAGS = -lfl -Iinclude -g
 all:
 	bison -d parser.y --report-file=parser.output --verbose
 	flex scanner.l
-	gcc main.c src/*.c parser.tab.c lex.yy.c -o etapa5 $(CFLAGS)
+	gcc main.c src/*.c parser.tab.c lex.yy.c -o etapa6 $(CFLAGS)
 
 clean:
-	rm -f etapa5
+	rm -f etapa6
 	rm -f lex.yy.c
 	rm -f parser.tab.c
 	rm -f parser.tab.h

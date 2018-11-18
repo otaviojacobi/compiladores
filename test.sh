@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROGRAM='etapa5'
+PROGRAM='etapa6'
 ILOCSIM='ilocsim.py'
 
 RED='\033[0;31m'
