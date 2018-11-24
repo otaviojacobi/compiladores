@@ -24,13 +24,15 @@ void push(stack_node_t** stack, symbol_table_t** value){
   *stack = temp;
 }
 
-void pop(stack_node_t** s){
+void pop(stack_node_t** s, int clear){
   stack_node_t* temp = *s;
   *s = temp->next;
   //printf("inner table:\n");  // #debug
   //print_table(temp->value);  // #debug
-  clear_table(temp->value);
-  free(temp);
+  if(clear == 1){
+    clear_table(temp->value);
+    free(temp);
+  }
 }
 
 void new_scope(stack_node_t **tables, symbol_table_t** new_scope){ // just a more function-descriptive name for push

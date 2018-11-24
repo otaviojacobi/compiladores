@@ -15,6 +15,7 @@ typedef struct arg_list {
 
 } arg_list_t;
 
+struct symbol_table;
 
 typedef struct symbol_table_item {
 
@@ -31,6 +32,7 @@ typedef struct symbol_table_item {
     int is_vector;
     int is_global;
     int func_label;
+    struct symbol_table* inner_table;
 } symbol_table_item_t;
 
 typedef struct symbol_table {

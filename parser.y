@@ -34,6 +34,8 @@
 
 
   symbol_table_t *inner_scope;
+  symbol_table_t *_aux_scope;
+  symbol_table_item_t* _aux_scope_item;
   char err_msg[ERROR_MESSAGE_MAX_LENGTH];
   token_type_t return_type;
   char *func_return_type_name;
@@ -466,7 +468,9 @@ func: func_head command_block {
     sprintf(err_msg, "line %d: %s %s, %s %s\n", get_line_number(),"Returning type", type_to_str(return_type),"but function is of type", type_to_str(type));
     quit(ERR_WRONG_PAR_RETURN, err_msg);
   }
-  //pop(&tables);
+  find_item(tables, ((valor_lexico_t*)$1->first_child->brother_next->value)->value.stringValue)->item->inner_table = _aux_scope;
+  //_aux_scope = NULL;
+  pop(&tables, 1);
 }
 | TK_PR_STATIC func_head command_block {
   $$ = MakeNode(AST_TYPE_STATIC, NULL);
@@ -475,7 +479,7 @@ func: func_head command_block {
   InsertChild(func, $2); 
   InsertChild(func, $3);
   InsertChild($$, func);
-  //pop(&tables);
+  pop(&tables, 1);
   char *identifier = ((valor_lexico_t*)$2->first_child->brother_next->value)->value.stringValue;
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
@@ -506,6 +510,8 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
   token_value_t value = $2->value;
 
   new_scope(&tables, &inner_scope);
+  _aux_scope = NULL;
+
 
   arg_list_t *params = NULL, *p_create = NULL, *p_last = NULL;
   tree_node_t *aux = $3;
@@ -523,6 +529,7 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       p_create = (arg_list_t*)malloc(sizeof(arg_list_t));
       p_create->next=NULL;
       aux_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+      _aux_scope_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
       
       if (((valor_lexico_t*)aux->value)->type == AST_TYPE_CONST) {
         is_const = 1;
@@ -563,12 +570,15 @@ func_head:  std_type_node TK_IDENTIFICADOR param_list
       aux_type = p_create->type;
 
       create_table_item(aux_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, aux_value.stringValue),NULL, aux_value, is_const, 0, 0);
+      create_table_item(_aux_scope_item, get_line_number(), NATUREZA_IDENTIFICADOR, aux_type, get_type_size(aux_type, aux_value.stringValue),NULL, aux_value, is_const, 0, 0);
       aux_item->var_offset = BASE_STACK+get_type_size(aux_type, aux_value.stringValue)*counter;
+      _aux_scope_item->var_offset = BASE_STACK+get_type_size(aux_type, aux_value.stringValue)*counter;
 
       if(add_item(tables, param_name, aux_item) == -1){
         sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Parameter", param_name, "has already been declared");
         quit(ERR_DECLARED, err_msg);
-      }
+      }else
+        _add_item(&_aux_scope, param_name, _aux_scope_item);
 
       if(counter == 0) {
         params = p_create;
@@ -878,16 +888,20 @@ std_type TK_IDENTIFICADOR {
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $2));
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  _aux_scope_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
   
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
   token_value_t value = ((valor_lexico_t*)$2)->value;
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
+  create_table_item(_aux_scope_item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
   item->is_global = 0;
+  _aux_scope_item->is_global = 0;
   if(add_item(tables, value.stringValue, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Identificator", value.stringValue, "has already been declared");
     quit(ERR_DECLARED, err_msg);
-  }
+  }else
+    _add_item(&_aux_scope, value.stringValue, _aux_scope_item);
 
 }
 | TK_IDENTIFICADOR TK_IDENTIFICADOR { 
@@ -924,6 +938,7 @@ std_type TK_IDENTIFICADOR {
 
   char *identifier = ((valor_lexico_t*)$2)->value.stringValue;
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  _aux_scope_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
 
   symbol_table_t *st = find_item(tables, ((valor_lexico_t*)$4)->value.stringValue);
   if( st == NULL ) {
@@ -951,6 +966,7 @@ std_type TK_IDENTIFICADOR {
   }
 
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, $2->value.stringValue), NULL, $2->value, 0, 0, 0);
+  create_table_item(_aux_scope_item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, $2->value.stringValue), NULL, $2->value, 0, 0, 0);
 
   if(st->item->type != AST_TYPE_INT) {
     quit(ERR_NOT_IMPLEMENTED, "Only int are suported.");
@@ -961,8 +977,8 @@ std_type TK_IDENTIFICADOR {
   if(add_item(tables, identifier, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
     quit(ERR_DECLARED, err_msg);
-
-  }
+  }else
+    _add_item(&_aux_scope, identifier, _aux_scope_item);
 
 }
 | std_type TK_IDENTIFICADOR TK_OC_LE tk_lit
@@ -973,6 +989,7 @@ std_type TK_IDENTIFICADOR {
   InsertChild($$, $4);
 
   symbol_table_item_t *item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
+  _aux_scope_item = (symbol_table_item_t*)malloc(sizeof(symbol_table_item_t));
   token_value_t value = ((valor_lexico_t*)$2)->value;  
   token_type_t type = ((valor_lexico_t*)$1->value)->type;
   
@@ -994,6 +1011,7 @@ std_type TK_IDENTIFICADOR {
 
   char* identifier = value.stringValue;
   create_table_item(item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
+  create_table_item(_aux_scope_item, get_line_number(), NATUREZA_IDENTIFICADOR, type, get_type_size(type, value.stringValue),NULL, value, 0, 0, 0);
 
   if( ((valor_lexico_t*)$4->value)->type != AST_TYPE_LITERAL_INT){
     quit(ERR_NOT_IMPLEMENTED, "Only allowed type is int.");
@@ -1003,7 +1021,8 @@ std_type TK_IDENTIFICADOR {
   if(add_item(tables, identifier, item) == -1){
     sprintf(err_msg, "line %d: %s '%s' %s\n", get_line_number(),"Variable", identifier, "has already been declared");
     quit(ERR_DECLARED, err_msg);
-  }
+  }else
+    _add_item(&_aux_scope, identifier, _aux_scope_item);
 
 }
 ;
@@ -1909,8 +1928,9 @@ void GenerateCode(tree_node_t* head) {
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
-
+      push(&tables, &(find_item(tables, ((valor_lexico_t*)head->first_child->first_child->brother_next->value)->value.stringValue)->item->inner_table));
       GenerateCode(head->first_child->brother_next);
+      pop(&tables, 0);
       GenerateCode(head->first_child->brother_next->brother_next);
     break;
 
