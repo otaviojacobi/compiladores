@@ -7,6 +7,7 @@
   #include "scope_stack.h"
   #include "symbol_table.h"
   #include "iloc.h"
+  #include "intlist.h"
 }
 
 %{
@@ -24,6 +25,7 @@
   #include "symbol_table.h"
   #include "iloc.h"
   #include "iloc.h"
+  #include "intlist.h"
 
   extern tree_node_t *arvore;
   extern stack_node_t *tables;
@@ -1929,7 +1931,39 @@ void GenerateCode(tree_node_t* head) {
       code_list_aux->next = NULL;
 
       push(&tables, &(find_item(tables, ((valor_lexico_t*)head->first_child->first_child->brother_next->value)->value.stringValue)->item->inner_table));
+
+      _list = (intlist_t*) malloc(sizeof(intlist_t));
+      _reg_rfp_offset = (int*) malloc(sizeof(int));
+      *_reg_rfp_offset = 0; // just to clear
+      __save_regs__=1; // TRUE
+
+      // f_call
+      tmp_list = create_operation_list_node(STORE_REGS, -1);
+      tmp_list->op->reg_list = _list;
+      tmp_list->op->rfp_offset = _reg_rfp_offset;
+	  code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
       GenerateCode(head->first_child->brother_next);
+
+      *_reg_rfp_offset = local_desloc; // actuall desloc after inserting local variables 
+
+      _reg_rfp_offset = (int*) malloc(sizeof(int));
+      *_reg_rfp_offset = local_desloc; // I also need a deep copy for then I am going to read
+
+
+      // f_call
+      tmp_list = create_operation_list_node(LOAD_REGS, -1);
+      tmp_list->op->reg_list = _list;
+      tmp_list->op->rfp_offset = _reg_rfp_offset;
+	  code_list_aux->next = tmp_list;
+      code_list_aux = tmp_list;
+      code_list_aux->next = NULL;
+
+      __save_regs__=0; // FALSE
+      _list = NULL;
+      _reg_rfp_offset = NULL;
       pop(&tables, 0);
       GenerateCode(head->first_child->brother_next->brother_next);
     break;

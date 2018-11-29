@@ -58,12 +58,15 @@
 #define RETURN 				54
 #define FUNCTION_LABEL		55
 #define FUNCTION_CALL		56
+#define STORE_REGS			57
+#define LOAD_REGS			58
 
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "valor_lexico.h"
+#include "intlist.h"
 
 typedef struct operation {
   int code;
@@ -71,6 +74,9 @@ typedef struct operation {
   int left_ops[2];
   int right_ops[2];
   char* func_name;
+  intlist_t *reg_list;
+  int* rfp_offset;
+
 } operation_t;
 
 typedef struct operation_list {
@@ -78,6 +84,7 @@ typedef struct operation_list {
   struct operation_list *next;
 
 } operation_list_t;
+
 
 int getLabel();
 int getRegister();

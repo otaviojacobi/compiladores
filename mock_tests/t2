@@ -1,0 +1,12 @@
+int f(int val){
+	if(val == 0 || val == 1) then{
+		return 1;
+	};
+
+	return val*f(val-1);
+}
+
+int main(){
+	int x;
+	x = f(10);
+}

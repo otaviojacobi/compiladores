@@ -8,11 +8,14 @@ int getLabel() {
 }
 
 int getRegister() {
-  return ++current_register;
+  current_register++;
+  if(__save_regs__ == 1)
+      intlist_append(_list, current_register);
+  return current_register;
 }
 
 void print_op(operation_t *op) {
-
+  intlist_t* aux = op->reg_list;
   switch(op->code) {
     case OP_NOP:
       printf("loadI 1024 => rfp\n");
@@ -200,6 +203,31 @@ void print_op(operation_t *op) {
       break;
     case FUNCTION_CALL:
       printf("jumpI -> L%s\n", op->func_name);
+      break;
+    case STORE_REGS:
+      if(aux->value == 0) aux = aux->next;
+      printf("\n\n");
+      while(aux){
+        printf("storeAI r%d => rfp, %d\n", aux->value, *(op->rfp_offset));
+        *(op->rfp_offset) += 4;
+        printf("addI rsp, 4 => rsp\n");
+        aux = aux->next;
+      }
+      printf("\n\n");
+      //intlist_free(op->reg_list);
+      //free(op->rfp_offset);
+      break;
+    case LOAD_REGS:
+      if(aux->value == 0) aux = aux->next;
+      printf("\n\n");
+      while(aux){
+        printf("loadAI rfp, %d => r%d\n", *(op->rfp_offset), aux->value);
+        *(op->rfp_offset) += 4;
+        aux = aux->next;
+      }
+      printf("\n\n");
+      //intlist_free(op->reg_list);
+      //free(op->rfp_offset);
       break;
 
   }

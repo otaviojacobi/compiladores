@@ -1,0 +1,178 @@
+loadI 1024 => rfp
+loadI 1044 => rsp
+loadI 0 => rbss
+jumpI -> Lmain
+loadI 0 => r1
+storeAI r1 => rbss, 0
+Lf: 
+storeAI r2 => rfp, 28
+addI rsp, 4 => rsp
+storeAI r3 => rfp, 32
+addI rsp, 4 => rsp
+storeAI r4 => rfp, 36
+addI rsp, 4 => rsp
+storeAI r5 => rfp, 40
+addI rsp, 4 => rsp
+storeAI r6 => rfp, 44
+addI rsp, 4 => rsp
+storeAI r7 => rfp, 48
+addI rsp, 4 => rsp
+storeAI r8 => rfp, 52
+addI rsp, 4 => rsp
+storeAI r9 => rfp, 56
+addI rsp, 4 => rsp
+storeAI r10 => rfp, 60
+addI rsp, 4 => rsp
+storeAI r11 => rfp, 64
+addI rsp, 4 => rsp
+storeAI r12 => rfp, 68
+addI rsp, 4 => rsp
+storeAI r13 => rfp, 72
+addI rsp, 4 => rsp
+storeAI r14 => rfp, 76
+addI rsp, 4 => rsp
+storeAI r15 => rfp, 80
+addI rsp, 4 => rsp
+storeAI r16 => rfp, 84
+addI rsp, 4 => rsp
+storeAI r17 => rfp, 88
+addI rsp, 4 => rsp
+storeAI r18 => rfp, 92
+addI rsp, 4 => rsp
+storeAI r19 => rfp, 96
+addI rsp, 4 => rsp
+storeAI r20 => rfp, 100
+addI rsp, 4 => rsp
+loadI 0 => r2
+storeAI r2 => rfp, 24
+addI rsp, 4 => rsp
+loadAI rfp, 20 => r4
+loadI 1 => r5
+cmp_EQ r4, r5 => r6
+cbr r6 -> L5, L4
+L4: 
+loadAI rfp, 20 => r7
+loadI 0 => r8
+cmp_EQ r7, r8 => r9
+L5: 
+or r6, r9 => r3
+cbr r3 -> L1, L2
+L1: 
+loadI 1 => r10
+storeAI r10 => rfp, 4
+i2i rfp => rsp
+loadAI rfp, 8 => rfp
+loadAI rsp, 0 => r11
+jump -> r11
+jumpI -> L3
+L2: 
+loadAI rfp, 20 => r12
+loadI 1 => r13
+sub r12, r13 => r14
+storeAI r14 => rsp, 20
+storeAI rfp => rsp, 8
+i2i rsp => rfp
+addI rsp, 24 => rsp
+i2i rpc => r15
+addI r15, 4 => r15
+storeAI r15 => rfp, 0
+jumpI -> Lf
+loadAI rsp, 4 => r16
+storeAI r16 => rfp, 24
+loadAI rfp, 20 => r17
+loadAI rfp, 24 => r18
+mult r17, r18 => r19
+storeAI r19 => rfp, 4
+i2i rfp => rsp
+loadAI rfp, 8 => rfp
+loadAI rsp, 0 => r20
+jump -> r20
+L3: 
+loadAI rfp, 28 => r2
+loadAI rfp, 32 => r3
+loadAI rfp, 36 => r4
+loadAI rfp, 40 => r5
+loadAI rfp, 44 => r6
+loadAI rfp, 48 => r7
+loadAI rfp, 52 => r8
+loadAI rfp, 56 => r9
+loadAI rfp, 60 => r10
+loadAI rfp, 64 => r11
+loadAI rfp, 68 => r12
+loadAI rfp, 72 => r13
+loadAI rfp, 76 => r14
+loadAI rfp, 80 => r15
+loadAI rfp, 84 => r16
+loadAI rfp, 88 => r17
+loadAI rfp, 92 => r18
+loadAI rfp, 96 => r19
+loadAI rfp, 100 => r20
+Lg: 
+storeAI r21 => rfp, 24
+addI rsp, 4 => rsp
+storeAI r22 => rfp, 28
+addI rsp, 4 => rsp
+storeAI r23 => rfp, 32
+addI rsp, 4 => rsp
+storeAI r24 => rfp, 36
+addI rsp, 4 => rsp
+loadAI rfp, 20 => r21
+loadAI rbss, 0 => r22
+add r21, r22 => r23
+storeAI r23 => rfp, 4
+i2i rfp => rsp
+loadAI rfp, 8 => rfp
+loadAI rsp, 0 => r24
+jump -> r24
+loadAI rfp, 24 => r21
+loadAI rfp, 28 => r22
+loadAI rfp, 32 => r23
+loadAI rfp, 36 => r24
+Lmain: 
+storeAI r25 => rfp, 24
+addI rsp, 4 => rsp
+storeAI r26 => rfp, 28
+addI rsp, 4 => rsp
+storeAI r27 => rfp, 32
+addI rsp, 4 => rsp
+storeAI r28 => rfp, 36
+addI rsp, 4 => rsp
+storeAI r29 => rfp, 40
+addI rsp, 4 => rsp
+storeAI r30 => rfp, 44
+addI rsp, 4 => rsp
+storeAI r31 => rfp, 48
+addI rsp, 4 => rsp
+loadI 0 => r25
+storeAI r25 => rfp, 20
+addI rsp, 4 => rsp
+loadI 2 => r26
+storeAI r26 => rbss, 0
+loadI 10 => r27
+storeAI r27 => rsp, 20
+storeAI rfp => rsp, 8
+i2i rsp => rfp
+addI rsp, 24 => rsp
+i2i rpc => r28
+addI r28, 4 => r28
+storeAI r28 => rfp, 0
+jumpI -> Lf
+loadAI rsp, 4 => r29
+storeAI r29 => rsp, 20
+storeAI rfp => rsp, 8
+i2i rsp => rfp
+addI rsp, 24 => rsp
+i2i rpc => r30
+addI r30, 4 => r30
+storeAI r30 => rfp, 0
+jumpI -> Lg
+loadAI rsp, 4 => r31
+storeAI r31 => rfp, 20
+loadAI rfp, 24 => r25
+loadAI rfp, 28 => r26
+loadAI rfp, 32 => r27
+loadAI rfp, 36 => r28
+loadAI rfp, 40 => r29
+loadAI rfp, 44 => r30
+loadAI rfp, 48 => r31
+halt

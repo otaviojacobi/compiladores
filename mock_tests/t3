@@ -1,0 +1,17 @@
+int fib(int n){
+	int aux1;
+	int aux2;
+	if(n == 0 || n == 1) then{
+		return n;
+	};
+
+	aux1 = fib(n-1);
+	aux2 = fib(n-2);
+
+	return aux1+aux2;
+}
+
+int main(){
+	int res;
+	res = fib(5);
+}

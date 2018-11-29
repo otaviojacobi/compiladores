@@ -1,0 +1,21 @@
+val int;
+
+int f(int val){
+	int aux;
+	if(val == 1 || val == 0) then{
+		return 1;
+	}else{
+		aux = f(val-1);
+		return val*aux;
+	};
+}
+
+int g(int x){
+	return x+val;
+}
+
+int main(){
+	int x;
+	val = 2;
+	x = g(f(10));
+}
