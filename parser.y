@@ -14,6 +14,7 @@
   #define ERROR_MESSAGE_MAX_LENGTH 200
   #define BASE_STACK 20
   #define DYN_LINK_OFFSET 8
+  #define STC_LINK_OFFSET 12
   #define RETURN_VALUE_OFFSET 4
   #define RETURN_ADDRESS_OFFSET 0
   #define str(x) #x
@@ -2229,6 +2230,14 @@ int ResolveExpress(tree_node_t *head) {
   		code_list_aux->next = tmp_list;
 	    code_list_aux = tmp_list;
 	    code_list_aux->next = NULL;
+
+		tmp_list = create_operation_list_node(SET_STC_LINK, -1);
+  		(tmp_list->op->right_ops)[0] = STC_LINK_OFFSET;
+  		(tmp_list->op->left_ops)[0] = 0;
+  		// storeI left_ops[0] => rsp, 12
+  		code_list_aux->next = tmp_list;
+	    code_list_aux = tmp_list;
+	    code_list_aux->next = NULL;    
 
 	    // SAVE MACHINE STATE - store register values
 	  	tmp_list = create_operation_list_node(STORE_REGS, -1);

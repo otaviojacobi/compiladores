@@ -1,21 +1,21 @@
 val int;
+val2 int;
 
 int f(int val){
-	int aux;
 	if(val == 1 || val == 0) then{
 		return 1;
 	}else{
-		aux = f(val-1);
-		return val*aux;
+		return val*f(val-1);
 	};
 }
 
 int g(int x){
-	return x+val;
+	return x+val2*val;
 }
 
 int main(){
 	int x;
 	val = 2;
-	x = g(f(10));
+	val2 = 3;
+	x = g(f(10))+g(1);
 }

@@ -23,6 +23,9 @@ void print_op(operation_t *op) {
       printf("loadI 1044 => rsp\n");
       printf("loadI 0 => rbss\n");
       printf("loadI 0 => r0\n");
+      printf("storeAI r0 => rfp, 0\n"); // main return address
+      printf("storeAI r0 => rfp, 4\n"); // main return value
+      printf("storeAI r0 => rfp, 8\n"); // main dynamic link
       printf("storeAI r0 => rfp, 12\n"); // main static link
       printf("jumpI -> Lmain\n");
       break;
@@ -183,6 +186,10 @@ void print_op(operation_t *op) {
     case SET_DYN_LINK:
       printf("storeAI rfp => rsp, %d\n", (op->right_ops)[0]);
       break;
+    case SET_STC_LINK:
+      printf("loadI %d => r0\n", (op->left_ops)[0]);
+      printf("storeAI r0 => rsp, %d\n", (op->right_ops)[0]);
+      break;
     case MOVE_RFP:
       printf("i2i rsp => rfp\n");
       break;
@@ -210,26 +217,22 @@ void print_op(operation_t *op) {
     case STORE_REGS:
       if(aux->value == 0) aux = aux->next;
       _int_aux = *(op->rfp_offset);
-      printf("\n\n");
       while(aux){
         printf("storeAI r%d => rfp, %d\n", aux->value, _int_aux);
         _int_aux += 4;
         aux = aux->next;
       }
-      printf("\n\n");
       //intlist_free(op->reg_list);
       //free(op->rfp_offset);
       break;
     case LOAD_REGS:
       if(aux->value == 0) aux = aux->next;
       _int_aux = *(op->rfp_offset);
-      printf("\n\n");
       while(aux){
         printf("loadAI rfp, %d => r%d\n", _int_aux, aux->value);
         _int_aux += 4;
         aux = aux->next;
       }
-      printf("\n\n");
       //intlist_free(op->reg_list);
       //free(op->rfp_offset);
       break;
@@ -241,6 +244,8 @@ void print_op(operation_t *op) {
         aux = aux->next;
       }
       printf("addI rsp, %d => rsp\n", _int_aux);
+      printf("loadI 0 => r0\n");
+      printf("storeAI r0 => rfp, 16\n");
       break;
 
   }

@@ -5,6 +5,7 @@ loadI 0 => r0
 storeAI r0 => rfp, 12
 jumpI -> Lmain
 Lf: 
+storeAI rfp => rfp, 12
 addI rsp, 8 => rsp
 loadI 10 => r1
 storeAI r1 => rfp, 4

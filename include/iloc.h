@@ -51,16 +51,17 @@
 #define LABEL           	47
 #define RSP_OFFSET			48
 #define SET_DYN_LINK		49
-#define MOVE_RFP			50
-#define MOVE_RSP			51
-#define LOAD_RPC			52
-#define LOAD_RETURN_VALUE 	53
-#define RETURN 				54
-#define FUNCTION_LABEL		55
-#define FUNCTION_CALL		56
-#define STORE_REGS			57
-#define LOAD_REGS			58
-#define INC_RSP_FOR_REGS    59
+#define SET_STC_LINK		50
+#define MOVE_RFP			51
+#define MOVE_RSP			52
+#define LOAD_RPC			53
+#define LOAD_RETURN_VALUE 	54
+#define RETURN 				55
+#define FUNCTION_LABEL		56
+#define FUNCTION_CALL		57
+#define STORE_REGS			58
+#define LOAD_REGS			59
+#define INC_RSP_FOR_REGS    60
 
 
 #include <stdio.h>
