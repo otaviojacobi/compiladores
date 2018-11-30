@@ -1,5 +1,5 @@
 int f(int val){
-	if(val == 0 || val == 1) then{
+	if(val == 1) then{
 		return 1;
 	};
 

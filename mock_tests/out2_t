@@ -76,7 +76,7 @@ addI rsp, 16 => rsp
 loadI 0 => r14
 storeAI r14 => rfp, 20
 addI rsp, 4 => rsp
-loadI 10 => r15
+loadI 2 => r15
 storeAI r15 => rsp, 20
 storeAI rfp => rsp, 8
 

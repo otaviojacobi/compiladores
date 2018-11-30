@@ -1937,29 +1937,15 @@ void GenerateCode(tree_node_t* head) {
       *_reg_rfp_offset = 0; // just to clear
       __save_regs__=1; // TRUE
 
-      // f_call
-      tmp_list = create_operation_list_node(STORE_REGS, -1);
+      tmp_list = create_operation_list_node(INC_RSP_FOR_REGS, -1);
       tmp_list->op->reg_list = _list;
-      tmp_list->op->rfp_offset = _reg_rfp_offset;
-	  code_list_aux->next = tmp_list;
+      code_list_aux->next = tmp_list;
       code_list_aux = tmp_list;
       code_list_aux->next = NULL;
 
       GenerateCode(head->first_child->brother_next);
 
-      *_reg_rfp_offset = local_desloc; // actuall desloc after inserting local variables 
-
-      _reg_rfp_offset = (int*) malloc(sizeof(int));
-      *_reg_rfp_offset = local_desloc; // I also need a deep copy for then I am going to read
-
-
-      // f_call
-      tmp_list = create_operation_list_node(LOAD_REGS, -1);
-      tmp_list->op->reg_list = _list;
-      tmp_list->op->rfp_offset = _reg_rfp_offset;
-	  code_list_aux->next = tmp_list;
-      code_list_aux = tmp_list;
-      code_list_aux->next = NULL;
+      *_reg_rfp_offset = local_desloc; // actual desloc after inserting local variables 
 
       __save_regs__=0; // FALSE
       _list = NULL;
@@ -2221,6 +2207,7 @@ int ResolveExpress(tree_node_t *head) {
   switch(head_type) {
     
   	case AST_TYPE_FUNCTION_CALL: 
+
   		aux_tree = head->first_child->brother_next->first_child;
   		while(aux_tree != NULL){
   			temp = ResolveExpress(aux_tree);
@@ -2241,6 +2228,14 @@ int ResolveExpress(tree_node_t *head) {
   		code_list_aux->next = tmp_list;
 	    code_list_aux = tmp_list;
 	    code_list_aux->next = NULL;
+
+	    // SAVE MACHINE STATE - store register values
+	  	tmp_list = create_operation_list_node(STORE_REGS, -1);
+      	tmp_list->op->reg_list = _list;
+      	tmp_list->op->rfp_offset = _reg_rfp_offset;
+	  	code_list_aux->next = tmp_list;
+      	code_list_aux = tmp_list;
+      	code_list_aux->next = NULL;
 
 	    tmp_list = create_operation_list_node(MOVE_RFP, -1);
 	    code_list_aux->next = tmp_list;
@@ -2285,6 +2280,14 @@ int ResolveExpress(tree_node_t *head) {
 	    code_list_aux->next = NULL;	    
 
 	    // AFTER RETURNING FROM FUNCTION CALL
+
+	    // restore register values
+		tmp_list = create_operation_list_node(LOAD_REGS, -1);
+		tmp_list->op->reg_list = _list;
+		tmp_list->op->rfp_offset = _reg_rfp_offset;
+		code_list_aux->next = tmp_list;
+		code_list_aux = tmp_list;
+		code_list_aux->next = NULL;
 
 	    new_register = getRegister();
 	    tmp_list = create_operation_list_node(LOAD_RETURN_VALUE, -1);

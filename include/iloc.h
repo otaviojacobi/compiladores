@@ -60,6 +60,7 @@
 #define FUNCTION_CALL		56
 #define STORE_REGS			57
 #define LOAD_REGS			58
+#define INC_RSP_FOR_REGS    59
 
 
 #include <stdio.h>
