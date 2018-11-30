@@ -1274,6 +1274,7 @@ TK_IDENTIFICADOR '(' args ')'
 {
   $$ = MakeNode(AST_TYPE_FUNCTION_CALL, NULL);
   InsertChild($$, MakeNode(AST_TYPE_IDENTIFICATOR, $1));
+  InsertChild($$, MakeNode(AST_TYPE_EXPRESSION_LIST, NULL));
 
   symbol_table_t *st = find_item(tables, $1->value.stringValue);
 

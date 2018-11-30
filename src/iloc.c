@@ -22,6 +22,8 @@ void print_op(operation_t *op) {
       printf("loadI 1024 => rfp\n");
       printf("loadI 1044 => rsp\n");
       printf("loadI 0 => rbss\n");
+      printf("loadI 0 => r0\n");
+      printf("storeAI r0 => rfp, 12\n"); // main static link
       printf("jumpI -> Lmain\n");
       break;
     case OP_ADD:
